@@ -16,6 +16,14 @@
 
 ---
 
+<p align="center">
+  <img src="./docs/screenshots/dashboard.png" alt="OpenBBox 三列工作台" width="100%">
+  <br>
+  <em>三列工作台：提示词列表 → AI 回复 → 代码 Diff 与行号</em>
+</p>
+
+---
+
 ## ⚡️ 为什么需要脉络？
 
 用 AI 写代码很快，但它是一个**黑匣子**。
@@ -75,6 +83,12 @@
 | **Claude Desktop** | 云端应用 | API | ☁️ 云端 |
 
 > 想添加新 IDE？查看[贡献指南](./CONTRIBUTING.md#how-to-add-a-new-ide-adapter)。
+
+<p align="center">
+  <img src="./docs/screenshots/scan-panel.png" alt="IDE 嗅探面板 — 自动检测已安装的 AI IDE" width="680">
+  <br>
+  <em>IDE 嗅探面板：自动检测你机器上的 Cursor、VS Code、Trae、Codex 等</em>
+</p>
 
 ---
 

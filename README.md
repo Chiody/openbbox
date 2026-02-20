@@ -16,6 +16,14 @@
 
 ---
 
+<p align="center">
+  <img src="./docs/screenshots/dashboard.png" alt="OpenBBox Dashboard — Three-column workspace" width="100%">
+  <br>
+  <em>The Three-Column Workspace: Prompt list → AI response → Code diff with line numbers</em>
+</p>
+
+---
+
 ## ⚡️ Why OpenBBox?
 
 AI-assisted coding is fast, but it's a **Black Box**.
@@ -75,6 +83,12 @@ Imagine you built a secure auth module in **Project A** using Cursor. With OpenB
 | **Claude Desktop** | Cloud App | API | ☁️ Cloud |
 
 > Want to add a new IDE? See the [Contributing Guide](./CONTRIBUTING.md#how-to-add-a-new-ide-adapter).
+
+<p align="center">
+  <img src="./docs/screenshots/scan-panel.png" alt="IDE Scanner — Auto-detect installed AI IDEs" width="680">
+  <br>
+  <em>IDE Scanner: Auto-detects Cursor, VS Code, Trae, Codex and more on your machine</em>
+</p>
 
 ---
 
