@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 
 $REPO = "https://github.com/Chiody/openbbox.git"
 $INSTALL_DIR = if ($env:OPENBBOX_HOME) { $env:OPENBBOX_HOME } else { "$env:USERPROFILE\.openbbox-app" }
-$MIN_PYTHON_MINOR = 10
+$MIN_PYTHON_MINOR = 9
 
 Write-Host ""
 Write-Host "  ╔══════════════════════════════════════╗" -ForegroundColor Cyan

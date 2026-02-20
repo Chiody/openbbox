@@ -5,7 +5,7 @@ set -euo pipefail
 
 REPO="https://github.com/Chiody/openbbox.git"
 INSTALL_DIR="${OPENBBOX_HOME:-$HOME/.openbbox-app}"
-MIN_PYTHON="3.10"
+MIN_PYTHON="3.9"
 
 RED='\033[0;31m'; GREEN='\033[0;32m'; CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
 
@@ -28,7 +28,7 @@ for cmd in python3 python; do
         ver=$("$cmd" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>/dev/null || echo "0.0")
         major=$(echo "$ver" | cut -d. -f1)
         minor=$(echo "$ver" | cut -d. -f2)
-        if [ "$major" -ge 3 ] && [ "$minor" -ge 10 ]; then
+        if [ "$major" -ge 3 ] && [ "$minor" -ge 9 ]; then
             PYTHON="$cmd"
             break
         fi
