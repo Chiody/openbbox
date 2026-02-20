@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "openbbox"
+version = "0.2.0"
+description = "Open the Black Box of AI-Driven Development — capture prompts, diffs, and project DNA from AI IDEs."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "OpenBBox Contributors"},
+]
+keywords = ["ai", "ide", "cursor", "claude", "prompt", "git", "diff", "developer-tools"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Version Control",
+    "Topic :: Software Development :: Documentation",
+]
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "websockets>=14.0",
+    "watchdog>=6.0.0",
+    "gitpython>=3.1.44",
+    "aiosqlite>=0.21.0",
+    "pydantic>=2.10.0",
+    "click>=8.1.8",
+    "rich>=13.9.0",
+    "jinja2>=3.1.5",
+    "python-multipart>=0.0.18",
+    "unidiff>=0.7.5",
+]
+
+[project.urls]
+Homepage = "https://github.com/Chiody/openbbox"
+Repository = "https://github.com/Chiody/openbbox"
+Issues = "https://github.com/Chiody/openbbox/issues"
+
+[project.scripts]
+openbbox = "cli.main:cli"
+
+[tool.setuptools.packages.find]
+include = ["cli*", "core*", "adapters*", "server*", "protocol*"]
+
+[tool.setuptools.package-data]
+"dashboard" = ["*.html", "*.css", "*.js"]
+"docs" = ["*.html", "*.css", "*.js"]
+"protocol" = ["*.json"]

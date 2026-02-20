@@ -1,0 +1,15 @@
+services:
+  openbbox:
+    build: .
+    ports:
+      - "9966:9966"
+    volumes:
+      - ~/.openbbox:/root/.openbbox
+      # Mount IDE data directories (read-only) — comment out any you don't use
+      - ~/.cursor:/root/.cursor:ro
+      - ~/.claude:/root/.claude:ro
+      - ~/.codeium:/root/.codeium:ro
+    environment:
+      - OPENBBOX_HOST=0.0.0.0
+      - OPENBBOX_PORT=9966
+    restart: unless-stopped

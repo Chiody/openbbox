@@ -1,0 +1,4285 @@
+<!DOCTYPE html>
+<html lang="en" translate="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenBBox | 脉络 — Workspace</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+
+        :root {
+            --bg: #050505;
+            --sidebar: #000000;
+            --panel: #0a0a0a;
+            --panel-header: #0f0f0f;
+            --accent: #00f2ff;
+            --accent-glow: rgba(0, 242, 255, 0.15);
+            --accent-purple: #a855f7;
+            --accent-orange: #f97316;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --text-main: #e0e0e0;
+            --text-dim: #666;
+            --text-muted: #444;
+            --border: #1a1a1a;
+            --border-hover: #333;
+            --card-bg: rgba(255, 255, 255, 0.02);
+            --diff-add: #22c55e;
+            --diff-del: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Column 1: Project Source (collapsible) ── */
+        .col-source {
+            width: 76px;
+            min-width: 76px;
+            background: var(--sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 14px;
+            transition: width 0.3s cubic-bezier(.4,0,.2,1), min-width 0.3s cubic-bezier(.4,0,.2,1);
+            overflow: hidden;
+        }
+
+        .col-source.expanded {
+            width: 230px;
+            min-width: 230px;
+            align-items: stretch;
+            padding: 20px 14px;
+            gap: 10px;
+        }
+
+        .sidebar-top {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            flex-shrink: 0;
+            padding: 0 4px;
+        }
+
+        .col-source.expanded .sidebar-top {
+            justify-content: space-between;
+            padding: 0;
+        }
+
+        /* Collapsed: hide logo, only show toggle */
+        .col-source:not(.expanded) .brand-icon { display: none; }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            min-height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), #0088ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: #000;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        .source-divider {
+            width: 32px;
+            height: 1px;
+            background: var(--border);
+            margin: 2px 0;
+            flex-shrink: 0;
+        }
+
+        .col-source.expanded .source-divider {
+            width: 100%;
+        }
+
+        #project-list {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 14px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            min-height: 0;
+            width: 100%;
+            padding: 0 0 20px 0;
+        }
+        .col-source.expanded #project-list {
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .project-btn {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            background: #111;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+
+        .project-btn:hover { border-color: var(--border-hover); background: #1a1a1a; }
+        .project-btn.active {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+            color: var(--accent);
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
+        }
+
+        /* Collapsed: tooltip on hover */
+        /* Tooltip rendered as fixed overlay — never clipped by parent overflow */
+        #sidebar-tooltip {
+            display: none;
+            position: fixed;
+            background: #1a1a1a;
+            border: 1px solid var(--border-hover);
+            border-radius: 8px;
+            padding: 10px 14px;
+            white-space: nowrap;
+            z-index: 9999;
+            pointer-events: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        }
+        #sidebar-tooltip.visible { display: block; }
+        #sidebar-tooltip .tt-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        #sidebar-tooltip .tt-ide {
+            font-size: 10px;
+            color: var(--text-dim);
+            margin-top: 3px;
+        }
+        #sidebar-tooltip .tt-count {
+            font-size: 10px;
+            color: var(--accent);
+            margin-top: 3px;
+        }
+
+        /* Expanded mode: project row layout */
+        .col-source.expanded .project-btn {
+            width: 100%;
+            height: auto;
+            min-height: 52px;
+            border-radius: 10px;
+            padding: 10px 12px;
+            justify-content: flex-start;
+            gap: 10px;
+        }
+
+        .proj-icon {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            border-radius: 8px;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .proj-info {
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        .col-source:not(.expanded) .proj-icon { display: none; }
+        .col-source.expanded .proj-info { display: flex; }
+        .col-source.expanded .proj-icon-letter { display: none; }
+
+        .proj-info-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .proj-info-meta {
+            font-size: 10px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 1px;
+        }
+
+        .proj-info-meta .ide-tag {
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 600;
+        }
+
+        .proj-info-meta .ide-tag.tag-cursor { background: rgba(0,242,255,0.1); color: var(--accent); }
+        .proj-info-meta .ide-tag.tag-trae { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
+        .proj-info-meta .ide-tag.tag-claude { background: rgba(249,115,22,0.1); color: var(--accent-orange); }
+        .proj-info-meta .ide-tag.tag-vscode { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
+
+        .col-source.expanded .ide-badge { display: none; }
+
+        /* Toggle switch — pill style */
+        .sidebar-toggle {
+            width: 44px;
+            height: 24px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: #111;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 2px;
+            gap: 0;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar-toggle:hover { border-color: var(--border-hover); }
+
+        .sidebar-toggle .sw-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+
+        .sidebar-toggle .sw-left {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .sidebar-toggle .sw-right {
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .sidebar-toggle.expanded .sw-left {
+            background: transparent;
+            color: var(--text-muted);
+        }
+
+        .sidebar-toggle.expanded .sw-right {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .ide-badge {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            background: #000;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid;
+        }
+
+        .ide-cursor { color: var(--accent); border-color: var(--accent); }
+        .ide-trae { color: var(--accent-blue); border-color: var(--accent-blue); }
+        .ide-claude { color: var(--accent-orange); border-color: var(--accent-orange); }
+        .ide-vscode { color: var(--accent-blue); border-color: var(--accent-blue); }
+        .ide-windsurf { color: var(--accent-purple); border-color: var(--accent-purple); }
+        .ide-codex { color: var(--accent-green); border-color: var(--accent-green); }
+
+        /* ── Column 2: Prompt DNA Stream ── */
+        .col-prompts {
+            width: 400px;
+            background: var(--panel);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .prompt-header {
+            padding: 16px 20px;
+            background: var(--panel-header);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .prompt-header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .brand-text {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+        }
+
+        .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+        .btn-copy {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-copy:hover {
+            background: var(--accent);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
+        }
+
+        .btn-copy.copied {
+            background: var(--accent-green);
+            border-color: var(--accent-green);
+            color: #000;
+        }
+
+        .prompt-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .prompt-stream {
+            flex: 1;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+        }
+
+        .prompt-stream::-webkit-scrollbar { width: 4px; }
+        .prompt-stream::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+        .prompt-stream::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+        .prompt-stream::-webkit-scrollbar-track { background: transparent; }
+
+        .prompt-card {
+            padding: 20px;
+            border-bottom: 1px solid #111;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.35;
+            border-left: 4px solid transparent;
+        }
+
+        .prompt-card:hover { opacity: 0.7; background: rgba(255, 255, 255, 0.01); }
+
+        .prompt-card.active {
+            opacity: 1;
+            border-left-color: var(--accent);
+            background: linear-gradient(90deg, var(--accent-glow) 0%, transparent 100%);
+        }
+
+        .prompt-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 10px;
+        }
+
+        .prompt-index { color: var(--accent); font-weight: 600; }
+        .prompt-source { font-weight: 600; }
+        .prompt-time { color: var(--text-muted); }
+
+        .prompt-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #ddd;
+        }
+
+        .prompt-impact {
+            margin-top: 8px;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* ── Column 3: AI Response & Diff Display ── */
+        .col-display {
+            flex: 1;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .display-header {
+            height: 52px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 32px;
+            justify-content: space-between;
+        }
+
+        .display-tabs {
+            display: flex;
+            gap: 0;
+        }
+        .display-tab {
+            padding: 6px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .display-tab:hover { color: var(--text-dim); }
+        .display-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* ── Apple Notes-style Memo ── */
+        .memo-wrap {
+            display: flex;
+            height: 100%;
+            overflow: hidden;
+        }
+        .memo-sidebar {
+            width: 260px;
+            min-width: 200px;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            background: rgba(255,255,255,0.01);
+        }
+        .memo-sidebar-header {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .memo-sidebar-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .memo-sidebar-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+        .memo-sidebar-count {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+        .memo-new-btn {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--accent);
+            background: rgba(0,242,255,0.08);
+            border: none;
+            transition: all 0.15s;
+        }
+        .memo-new-btn:hover { background: rgba(0,242,255,0.16); }
+        .memo-search {
+            width: 100%;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            color: var(--text-main);
+            outline: none;
+        }
+        .memo-search:focus { border-color: var(--accent); }
+        .memo-search::placeholder { color: var(--text-muted); }
+        .memo-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .memo-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            transition: background 0.15s;
+        }
+        .memo-item:hover { background: rgba(255,255,255,0.03); }
+        .memo-item.active { background: rgba(0,242,255,0.06); border-left: 2px solid var(--accent); }
+        .memo-item-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        .memo-item-snippet {
+            font-size: 11px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 3px;
+        }
+        .memo-item-footer {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .memo-item-badge {
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            padding: 1px 5px;
+            border-radius: 3px;
+        }
+        .memo-item-badge.note { background: rgba(168,85,247,0.12); color: var(--accent-purple); }
+        .memo-item-badge.deploy { background: rgba(34,197,94,0.12); color: var(--accent-green); }
+        .memo-item-pin { color: var(--accent-orange); font-size: 10px; }
+
+        .memo-detail {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .memo-detail-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 52px;
+        }
+        .memo-detail-actions {
+            display: flex;
+            gap: 4px;
+        }
+        .memo-detail-btn {
+            padding: 5px 10px;
+            font-size: 11px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: none;
+            color: var(--text-dim);
+            transition: all 0.15s;
+        }
+        .memo-detail-btn:hover { border-color: var(--border-hover); color: var(--text-main); }
+        .memo-detail-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+        .memo-detail-btn.pin-active { color: var(--accent-orange); border-color: var(--accent-orange); }
+        .memo-detail-btn.readme-on { color: var(--accent-green); border-color: var(--accent-green); }
+        .memo-detail-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+        .memo-detail-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+            cursor: text;
+        }
+        .memo-detail-editor {
+            width: 100%;
+            min-height: 100%;
+            background: transparent;
+            border: none;
+            padding: 0;
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-main);
+            font-family: inherit;
+            outline: none;
+        }
+        .memo-detail-editor:empty::before {
+            content: attr(data-placeholder);
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+        .memo-detail-editor img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin: 8px 0;
+            display: block;
+        }
+        .memo-detail-editor h1 { font-size: 1.6em; font-weight: 700; margin: 12px 0 6px; }
+        .memo-detail-editor h2 { font-size: 1.3em; font-weight: 700; margin: 10px 0 4px; }
+        .memo-detail-editor h3 { font-size: 1.1em; font-weight: 600; margin: 8px 0 4px; }
+        .memo-detail-editor p { margin: 0 0 8px; }
+        .memo-detail-editor ul, .memo-detail-editor ol { padding-left: 1.5em; margin: 4px 0 8px; }
+        .memo-detail-editor a { color: var(--accent); text-decoration: underline; }
+        .memo-detail-editor code {
+            background: rgba(255,255,255,0.06);
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+        .memo-detail-editor pre {
+            background: #0d0d0d;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            margin: 8px 0;
+        }
+        .memo-detail-editor blockquote {
+            border-left: 3px solid var(--border-hover);
+            padding-left: 12px;
+            color: var(--text-dim);
+            margin: 8px 0;
+        }
+        .memo-detail-editor img {
+            cursor: pointer;
+            transition: outline 0.15s, box-shadow 0.15s;
+        }
+        .memo-detail-editor img.memo-img-selected {
+            outline: 2px solid var(--accent);
+            box-shadow: 0 0 0 4px rgba(0,242,255,0.15);
+        }
+        .memo-img-bar {
+            position: absolute;
+            display: flex;
+            gap: 4px;
+            background: rgba(0,0,0,0.85);
+            border: 1px solid var(--border-hover);
+            border-radius: 8px;
+            padding: 4px 6px;
+            z-index: 100;
+            pointer-events: auto;
+        }
+        .memo-img-bar button {
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            background: rgba(255,255,255,0.08);
+            color: var(--text-dim);
+            transition: all 0.12s;
+        }
+        .memo-img-bar button:hover { background: rgba(255,255,255,0.16); color: var(--text-main); }
+        .memo-img-bar button.danger:hover { background: rgba(239,68,68,0.2); color: #ef4444; }
+
+        .memo-img-resize-handle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border: 2px solid #000;
+            border-radius: 2px;
+            cursor: nwse-resize;
+            z-index: 101;
+        }
+
+        .memo-lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+        }
+        .memo-lightbox.open { display: flex; }
+        .memo-lightbox img {
+            max-width: 92vw;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
+        .memo-lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            font-size: 28px;
+            color: #fff;
+            cursor: pointer;
+            background: none;
+            border: none;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+        .memo-lightbox-close:hover { opacity: 1; }
+
+        .memo-toolbar {
+            display: flex;
+            gap: 2px;
+            padding: 6px 20px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+        }
+        .memo-tb-btn {
+            width: 30px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-dim);
+            background: none;
+            border: none;
+            transition: all 0.12s;
+        }
+        .memo-tb-btn:hover { background: rgba(255,255,255,0.08); color: var(--text-main); }
+        .memo-tb-sep {
+            width: 1px;
+            height: 20px;
+            background: var(--border);
+            margin: 4px 4px;
+            align-self: center;
+        }
+        .memo-deploy-bar {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(34,197,94,0.03);
+        }
+        .memo-deploy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+        }
+        .memo-deploy-field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .memo-deploy-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .memo-deploy-input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 12px;
+            color: var(--text-main);
+            font-family: 'Fira Code', monospace;
+            outline: none;
+        }
+        .memo-deploy-input:focus { border-color: var(--accent-green); }
+        .memo-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            gap: 8px;
+        }
+        .memo-empty-icon { font-size: 36px; opacity: 0.5; }
+        .memo-saved-indicator {
+            font-size: 10px;
+            color: var(--accent-green);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .memo-saved-indicator.show { opacity: 1; }
+        .memo-type-picker {
+            display: flex;
+            gap: 8px;
+            padding: 16px 20px;
+        }
+        .memo-type-option {
+            flex: 1;
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+        }
+        .memo-type-option:hover { border-color: var(--border-hover); }
+        .memo-type-option .type-icon { font-size: 24px; margin-bottom: 6px; }
+        .memo-type-option .type-name { font-size: 12px; font-weight: 600; color: var(--text-main); }
+        .memo-type-option .type-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+        /* README Simulator */
+        .readme-container {
+            padding: 24px 32px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .readme-toolbar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .readme-btn {
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-dim);
+            transition: all 0.2s;
+        }
+        .readme-btn:hover { border-color: var(--border-hover); color: var(--text-main); }
+        .readme-btn.primary {
+            background: rgba(0,242,255,0.08);
+            border-color: rgba(0,242,255,0.3);
+            color: var(--accent);
+        }
+        .readme-btn.primary:hover { background: rgba(0,242,255,0.15); }
+        .readme-btn.export {
+            background: rgba(34,197,94,0.08);
+            border-color: rgba(34,197,94,0.3);
+            color: var(--accent-green);
+        }
+        .readme-btn.export:hover { background: rgba(34,197,94,0.15); }
+        .readme-mode-toggle {
+            margin-left: auto;
+            display: flex;
+            gap: 0;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .readme-mode-btn {
+            padding: 5px 12px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            transition: all 0.15s;
+        }
+        .readme-mode-btn.active { background: rgba(255,255,255,0.08); color: var(--text-main); }
+        .readme-editor-wrap {
+            flex: 1;
+            display: flex;
+            gap: 0;
+            min-height: 0;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .readme-editor {
+            flex: 1;
+            background: #0a0a0a;
+            border: none;
+            padding: 20px;
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--text-main);
+            font-family: 'Fira Code', monospace;
+            resize: none;
+            outline: none;
+            overflow-y: auto;
+        }
+        .readme-preview {
+            flex: 1;
+            padding: 24px 32px;
+            overflow-y: auto;
+            background: #fff;
+            color: #24292f;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .readme-preview h1 { font-size: 2em; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; margin: 0.67em 0; }
+        .readme-preview h2 { font-size: 1.5em; border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; margin: 1em 0 0.5em; }
+        .readme-preview h3 { font-size: 1.25em; margin: 1em 0 0.5em; }
+        .readme-preview p { margin: 0 0 16px; }
+        .readme-preview ul, .readme-preview ol { padding-left: 2em; margin: 0 0 16px; }
+        .readme-preview li { margin: 4px 0; }
+        .readme-preview code {
+            background: rgba(175,184,193,0.2);
+            padding: 0.2em 0.4em;
+            border-radius: 6px;
+            font-size: 85%;
+            font-family: 'Fira Code', monospace;
+        }
+        .readme-preview pre {
+            background: #f6f8fa;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            font-size: 85%;
+            line-height: 1.45;
+            margin: 0 0 16px;
+        }
+        .readme-preview pre code { background: none; padding: 0; }
+        .readme-preview blockquote {
+            border-left: 4px solid #d0d7de;
+            padding: 0 1em;
+            color: #656d76;
+            margin: 0 0 16px;
+        }
+        .readme-preview img { max-width: 100%; border-radius: 6px; }
+        .readme-preview strong { font-weight: 600; }
+        .readme-preview hr { border: none; border-top: 1px solid #d0d7de; margin: 24px 0; }
+        .readme-preview table { border-collapse: collapse; width: 100%; margin: 0 0 16px; }
+        .readme-preview th, .readme-preview td { border: 1px solid #d0d7de; padding: 6px 13px; }
+        .readme-preview th { background: #f6f8fa; font-weight: 600; }
+
+        .readme-template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .readme-template-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .readme-template-card:hover { border-color: var(--accent); }
+        .readme-template-card.active { border-color: var(--accent); background: rgba(0,242,255,0.04); }
+        .readme-template-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+        .readme-template-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .readme-saved-msg {
+            font-size: 11px;
+            color: var(--accent-green);
+            margin-left: 8px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .readme-saved-msg.show { opacity: 1; }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-family: 'Fira Code', monospace;
+            color: var(--text-muted);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--accent); }
+            50% { opacity: 0.4; box-shadow: none; }
+        }
+
+        .display-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .display-content::-webkit-scrollbar { width: 4px; }
+        .display-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+        .display-content::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+        .display-content::-webkit-scrollbar-track { background: transparent; }
+
+        .response-section {
+            display: none;
+            animation: fadeSlide 0.35s ease-out;
+        }
+
+        .response-section.active { display: block; }
+
+        @keyframes fadeSlide {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .resp-prompt-box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .resp-prompt-text {
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.7;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+        .resp-prompt-text.collapsed {
+            max-height: 4.5em;
+        }
+        .resp-prompt-toggle {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 11px;
+            color: var(--accent);
+            cursor: pointer;
+            user-select: none;
+        }
+        .resp-prompt-toggle:hover { text-decoration: underline; }
+
+        .resp-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .resp-subtitle .ide-pill {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .resp-subtitle .ide-pill.ide-cursor { background: rgba(0,242,255,0.1); color: var(--accent); }
+        .resp-subtitle .ide-pill.ide-trae { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
+        .resp-subtitle .ide-pill.ide-claude { background: rgba(249,115,22,0.1); color: var(--accent-orange); }
+        .resp-subtitle .ide-pill.ide-codex { background: rgba(34,197,94,0.1); color: var(--accent-green); }
+        .resp-subtitle .ide-pill.ide-vscode { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
+
+        .resp-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent-purple);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            margin-top: 24px;
+        }
+
+        .resp-ai-content {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #bbb;
+        }
+        .resp-ai-content p { margin-bottom: 10px; }
+        .resp-ai-content ul, .resp-ai-content ol { margin: 8px 0 8px 20px; }
+        .resp-ai-content li { margin-bottom: 4px; }
+        .resp-ai-content code {
+            background: rgba(255,255,255,0.06);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: var(--accent);
+        }
+        .resp-ai-content pre {
+            background: #0d0d0d;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+            margin: 12px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        .resp-ai-content pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        .resp-ai-content strong { color: var(--text-main); }
+        .resp-ai-content h1, .resp-ai-content h2, .resp-ai-content h3 {
+            color: var(--text-main);
+            margin: 16px 0 8px;
+        }
+
+        .resp-files-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .resp-file-chip {
+            font-size: 11px;
+            font-family: 'Fira Code', monospace;
+            padding: 4px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        .resp-reasoning {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #999;
+            padding-left: 16px;
+            border-left: 2px solid #222;
+            margin-bottom: 32px;
+        }
+
+        .diff-container {
+            background: #000;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .diff-header {
+            padding: 10px 16px;
+            background: #0a0a0a;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .diff-file { color: var(--text-main); }
+        .diff-badge {
+            font-size: 9px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .diff-badge.modified { background: rgba(59, 130, 246, 0.15); color: var(--accent-blue); }
+        .diff-badge.added { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+        .diff-badge.deleted { background: rgba(239, 68, 68, 0.15); color: var(--diff-del); }
+
+        .diff-body {
+            padding: 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-break: break-all;
+            counter-reset: diff-line;
+        }
+
+        .diff-line {
+            display: flex;
+            padding: 0 16px;
+            transition: background 0.15s;
+        }
+
+        .diff-line:hover { background: rgba(255, 255, 255, 0.02); }
+
+        .diff-line-num {
+            width: 40px;
+            flex-shrink: 0;
+            text-align: right;
+            padding-right: 12px;
+            color: #333;
+            user-select: none;
+            border-right: 1px solid #1a1a1a;
+            margin-right: 12px;
+        }
+
+        .diff-line-content { flex: 1; }
+
+        .diff-line.add { background: rgba(34, 197, 94, 0.06); }
+        .diff-line.add .diff-line-content { color: var(--diff-add); }
+        .diff-line.del { background: rgba(239, 68, 68, 0.06); }
+        .diff-line.del .diff-line-content { color: var(--diff-del); }
+        .diff-line.hunk .diff-line-content { color: var(--accent-purple); font-style: italic; }
+        .diff-line.ctx .diff-line-content { color: var(--text-muted); }
+
+        .diff-add { color: var(--diff-add); }
+        .diff-del { color: var(--diff-del); }
+        .diff-ctx { color: var(--text-muted); }
+
+        .diff-stats-bar {
+            display: flex;
+            gap: 12px;
+            padding: 8px 16px;
+            border-top: 1px solid var(--border);
+            font-size: 10px;
+            font-family: 'Fira Code', monospace;
+            color: var(--text-muted);
+        }
+
+        .diff-stats-bar .stat-add { color: var(--diff-add); }
+        .diff-stats-bar .stat-del { color: var(--diff-del); }
+
+        /* Search box */
+        .search-box {
+            padding: 8px 16px;
+            margin: 12px 20px;
+            background: #111;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-size: 12px;
+            width: calc(100% - 40px);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .search-box:focus { border-color: var(--accent); }
+        .search-box::placeholder { color: var(--text-muted); }
+
+        .director-note {
+            margin-top: 24px;
+            padding: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .director-note-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent-purple);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .director-note-text {
+            font-size: 13px;
+            line-height: 1.7;
+            color: #888;
+        }
+
+        /* ── Empty state ── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .empty-state h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+            color: var(--text-dim);
+        }
+
+        .empty-state p { font-size: 13px; max-width: 300px; line-height: 1.6; }
+
+        /* ── Language switch ── */
+        .lang-switch {
+            position: fixed;
+            bottom: 16px;
+            right: 16px;
+            z-index: 100;
+        }
+
+        /* ── Scan Panel (modal overlay) ── */
+        .scan-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 500;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scan-overlay.open { display: flex; }
+
+        .scan-panel {
+            width: 620px;
+            max-height: 80vh;
+            background: #0d0d0d;
+            border: 1px solid var(--border-hover);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+        }
+
+        .scan-panel-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scan-panel-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .scan-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .scan-close:hover { border-color: var(--accent); color: var(--accent); }
+
+        .scan-panel-body {
+            padding: 20px 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .scan-section-label {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .scan-ide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .scan-ide-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 16px 8px 12px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border);
+            background: #111;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+            text-align: center;
+            min-height: 80px;
+        }
+
+        .scan-ide-item:hover { border-color: var(--border-hover); }
+
+        .scan-ide-item.checked {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+        }
+
+        .scan-ide-item.disabled {
+            opacity: 0.4;
+            cursor: help;
+        }
+
+        .scan-ide-check {
+            position: absolute;
+            top: 6px;
+            left: 6px;
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1.5px solid var(--border-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: transparent;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .scan-ide-item.checked .scan-ide-check {
+            border-color: var(--accent);
+            background: var(--accent);
+            color: #000;
+        }
+
+        .scan-ide-icon {
+            font-size: 22px;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .scan-ide-icon svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .scan-ide-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        .scan-ide-status {
+            font-size: 9px;
+            color: var(--accent-green);
+            line-height: 1.2;
+        }
+
+        .scan-ide-item.disabled .scan-ide-status {
+            color: var(--text-muted);
+        }
+
+        .scan-ide-item.cloud-only {
+            border-color: rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.02);
+            opacity: 0.6;
+            cursor: help;
+        }
+        .scan-ide-item.cloud-only .scan-ide-check {
+            border-color: var(--text-muted);
+            font-size: 10px;
+        }
+        .scan-ide-cloud-tag {
+            font-size: 8px;
+            color: var(--text-muted);
+            background: rgba(255,255,255,0.06);
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-top: 2px;
+        }
+
+        /* Custom hover tooltip for disabled / cloud-only IDE cards */
+        .scan-ide-tooltip-anchor {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            background: #1c1c1c;
+            border: 1px solid #444;
+            border-radius: 10px;
+            padding: 14px 18px;
+            min-width: 260px;
+            max-width: 320px;
+            pointer-events: none;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+            text-align: left;
+        }
+        .scan-ide-tooltip-anchor::before {
+            content: '';
+            position: absolute;
+            top: 16px;
+            left: -6px;
+            border: 6px solid transparent;
+            border-right-color: #444;
+        }
+        .scan-ide-tooltip-anchor.visible {
+            display: block;
+        }
+        .scan-ide-tooltip-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+        .scan-ide-tooltip-body {
+            font-size: 11px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+        .scan-ide-tooltip-cmd {
+            display: block;
+            margin-top: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            background: rgba(0,242,255,0.1);
+            padding: 6px 10px;
+            border-radius: 6px;
+            word-break: break-all;
+        }
+
+        /* Unavailable section divider */
+        .scan-ide-unavailable-divider {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0 4px;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        .scan-ide-unavailable-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .scan-ide-item.new-found {
+            border-color: var(--accent);
+            animation: newIdePulse 1.5s ease-in-out 3;
+        }
+        @keyframes newIdePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 200, 0); }
+            50% { box-shadow: 0 0 12px 4px rgba(0, 255, 200, 0.35); }
+        }
+
+        .btn-redetect {
+            margin-left: auto;
+            font-size: 11px !important;
+            padding: 6px 12px !important;
+        }
+        .btn-redetect.detecting {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .scan-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn-scan {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #000;
+            transition: all 0.3s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-scan:hover {
+            box-shadow: 0 0 24px rgba(0, 242, 255, 0.3);
+        }
+
+        .btn-scan:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-scan-outline {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            transition: all 0.2s;
+        }
+
+        .btn-scan-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+        .scan-progress {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            padding: 16px 0;
+        }
+
+        .scan-progress.active { display: flex; }
+
+        .scan-progress-bar-wrap {
+            width: 100%;
+            height: 6px;
+            background: #1a1a1a;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .scan-progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-blue));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .scan-progress-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--accent);
+        }
+
+        .scan-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .scan-log {
+            max-height: 140px;
+            overflow-y: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            line-height: 1.8;
+            color: var(--text-muted);
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+
+        .scan-log::-webkit-scrollbar { width: 4px; }
+        .scan-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+        .scan-log::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+        .scan-log::-webkit-scrollbar-track { background: transparent; }
+
+        .scan-log-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+        }
+
+        .scan-log-line .log-icon {
+            flex-shrink: 0;
+            width: 14px;
+            text-align: center;
+        }
+
+        .scan-log-line.log-ok .log-icon { color: var(--accent-green); }
+        .scan-log-line.log-info .log-icon { color: var(--accent); }
+        .scan-log-line.log-err .log-icon { color: var(--diff-del); }
+        .scan-log-line.log-wait .log-icon { color: var(--accent-blue); }
+
+        .scan-results {
+            display: none;
+        }
+
+        .scan-results.has-results { display: block; }
+
+        .scan-result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #111;
+            margin-bottom: 6px;
+            transition: all 0.2s;
+        }
+
+        .scan-result-item:hover { border-color: var(--border-hover); }
+
+        .scan-result-item.imported {
+            opacity: 0.4;
+            border-color: var(--border);
+        }
+
+        .scan-result-check {
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            border: 1.5px solid var(--border-hover);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .scan-result-item.selected .scan-result-check {
+            border-color: var(--accent-green);
+            background: var(--accent-green);
+            color: #000;
+        }
+
+        .scan-result-item.imported .scan-result-check {
+            border-color: var(--text-muted);
+            background: var(--text-muted);
+            color: #000;
+            cursor: default;
+        }
+
+        .scan-result-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .scan-result-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .scan-result-meta {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scan-result-ide {
+            padding: 1px 6px;
+            border-radius: 3px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .scan-result-count {
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .scan-result-imported-badge {
+            font-size: 9px;
+            color: var(--accent-green);
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .scan-panel-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .scan-footer-info {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .btn-import {
+            padding: 10px 28px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            background: var(--accent-green);
+            color: #000;
+            transition: all 0.3s;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-import:hover {
+            box-shadow: 0 0 24px rgba(34, 197, 94, 0.3);
+        }
+
+        .btn-import:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* ── Global scrollbar overrides ── */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.14); }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-corner { background: transparent; }
+
+        /* ── Drag resize handle between col-source and col-prompts ── */
+        .col-resize-handle {
+            width: 3px;
+            cursor: col-resize;
+            background: transparent;
+            position: relative;
+            flex-shrink: 0;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+        .col-resize-handle:hover,
+        .col-resize-handle.dragging {
+            background: var(--accent);
+            opacity: 0.4;
+        }
+        .col-resize-handle::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            left: -2px; right: -6px;
+        }
+
+        /* ── IDE filter chips in sidebar ── */
+        .ide-filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            padding: 0 4px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+        .col-source.expanded .ide-filter-bar {
+            padding: 0;
+            gap: 6px;
+        }
+        .ide-filter-chip {
+            font-size: 9px;
+            font-weight: 600;
+            padding: 3px 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            line-height: 1;
+        }
+        .ide-filter-chip:hover {
+            border-color: var(--border-hover);
+            color: var(--text-main);
+        }
+        .ide-filter-chip.active {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+        .col-source.expanded .ide-filter-chip {
+            font-size: 10px;
+            padding: 4px 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Column 1: Project Source (collapsible) -->
+    <div class="col-source" id="col-source">
+        <div class="sidebar-top">
+            <div class="brand-icon" title="OpenBBox">BB</div>
+            <div class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Expand / Collapse">
+                <span class="sw-icon sw-left">☰</span>
+                <span class="sw-icon sw-right">☷</span>
+            </div>
+        </div>
+        <div class="source-divider"></div>
+        <div class="ide-filter-bar" id="ide-filter-bar"></div>
+        <div class="source-divider"></div>
+        <div id="project-list"></div>
+    </div>
+
+    <!-- Sidebar tooltip (fixed, never clipped) -->
+    <div id="sidebar-tooltip">
+        <div class="tt-name"></div>
+        <div class="tt-ide"></div>
+        <div class="tt-count"></div>
+    </div>
+
+    <!-- Image lightbox -->
+    <div class="memo-lightbox" id="memo-lightbox" onclick="closeLightbox()">
+        <button class="memo-lightbox-close" onclick="closeLightbox()">&times;</button>
+        <img id="memo-lightbox-img" src="" alt="">
+    </div>
+
+    <!-- Drag handle to resize sidebar -->
+    <div class="col-resize-handle" id="col-resize-handle"></div>
+
+    <!-- Column 2: Prompt DNA Stream -->
+    <div class="col-prompts">
+        <div class="prompt-header">
+            <div class="prompt-header-top">
+                <span class="brand-text" id="brand-name">OpenBBox</span>
+                <div class="header-actions">
+                    <button class="btn-sm" onclick="openScanPanel()" id="scan-trigger" title="Scan IDEs">⚡ Scan</button>
+                    <button class="btn-sm" onclick="toggleLang()" id="lang-btn">中文</button>
+                </div>
+            </div>
+            <input type="text" class="search-box" id="search-input" placeholder="🔍 Search prompts..." oninput="filterPrompts(this.value)">
+            <button class="btn-copy" id="copy-btn" onclick="copyAllPrompts()">COPY ALL PROMPTS</button>
+            <div class="prompt-stats" style="margin-top: 12px;">
+                <span id="stat-total">TOTAL: 0</span>
+                <span id="stat-source">SOURCE: —</span>
+            </div>
+        </div>
+        <div class="prompt-stream" id="prompt-stream">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Column 3: AI Response & Diff / Memo -->
+    <div class="col-display">
+        <div class="display-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span id="status-text">REAL-TIME TRACING</span>
+                </div>
+                <div class="display-tabs">
+                    <div class="display-tab active" id="tab-response" onclick="switchDisplayTab('response')">AI RESPONSE</div>
+                    <div class="display-tab" id="tab-memo" onclick="switchDisplayTab('memo')">MEMO</div>
+                    <div class="display-tab" id="tab-readme" onclick="switchDisplayTab('readme')">README</div>
+                </div>
+            </div>
+            <div style="font-size: 10px; color: var(--text-muted); font-family: 'Fira Code', monospace;">
+                <span id="date-display"></span>
+            </div>
+        </div>
+        <div class="display-content" id="display-area">
+            <div class="empty-state" id="empty-state">
+                <h2 id="empty-title">No Data Yet</h2>
+                <p id="empty-desc">Start coding with an AI IDE. OpenBBox will automatically capture your prompts and code changes.</p>
+            </div>
+        </div>
+        <div class="display-content" id="memo-area" style="display:none;">
+        </div>
+        <div class="display-content" id="readme-area" style="display:none;">
+        </div>
+    </div>
+
+    <!-- Scan Panel Overlay -->
+    <div class="scan-overlay" id="scan-overlay" onclick="if(event.target===this)closeScanPanel()">
+        <div class="scan-panel">
+            <div class="scan-panel-header">
+                <h3 id="scan-title">🔍 IDE / Agent Scanner</h3>
+                <button class="scan-close" onclick="closeScanPanel()">✕</button>
+            </div>
+            <div class="scan-panel-body">
+                <div class="scan-section-label" id="scan-label-select">SELECT SOURCES</div>
+                <div class="scan-ide-grid" id="scan-ide-grid">
+                    <!-- Populated by JS -->
+                </div>
+                <div class="scan-actions">
+                    <button class="btn-scan" id="btn-start-scan" onclick="startScan()">START SCAN</button>
+                    <button class="btn-scan-outline" id="btn-select-all" onclick="toggleAllIdes()">SELECT ALL</button>
+                    <button class="btn-scan-outline btn-redetect" id="btn-redetect" onclick="redetectAdapters()" title="Re-scan for newly installed IDEs / AI Agents">🔄 RE-DETECT</button>
+                </div>
+                <div class="scan-progress" id="scan-progress">
+                    <div class="scan-progress-header">
+                        <div class="scan-spinner" id="scan-spinner"></div>
+                        <span id="scan-progress-text">Scanning...</span>
+                        <span id="scan-progress-percent" style="margin-left:auto;font-family:'Fira Code',monospace;font-size:11px;color:var(--text-muted);">0%</span>
+                    </div>
+                    <div class="scan-progress-bar-wrap">
+                        <div class="scan-progress-bar" id="scan-progress-bar"></div>
+                    </div>
+                    <div class="scan-log" id="scan-log"></div>
+                </div>
+                <div class="scan-section-label" style="margin-top:8px;" id="scan-label-results">DISCOVERED PROJECTS</div>
+                <div class="scan-results" id="scan-results">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+            <div class="scan-panel-footer">
+                <div class="scan-footer-info" id="scan-footer-info">Select projects to import</div>
+                <button class="btn-import" id="btn-import" onclick="importSelected()" disabled>IMPORT SELECTED</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── State ──
+        let currentLang = localStorage.getItem('openbbox_lang') || 'en';
+        let nodes = [];
+        let filteredNodes = [];
+        let projects = [];
+        let activeNodeIndex = 0;
+        let activeProjectId = '';
+        let ws = null;
+
+        const IDE_COLORS = {
+            Cursor: 'ide-cursor',
+            Trae: 'ide-trae',
+            ClaudeCode: 'ide-claude',
+            VSCode: 'ide-vscode',
+            Windsurf: 'ide-windsurf',
+            Codex: 'ide-codex',
+            Unknown: 'ide-cursor',
+        };
+
+        const IDE_SHORT = {
+            Cursor: 'C',
+            Trae: 'T',
+            ClaudeCode: 'CC',
+            VSCode: 'VS',
+            Windsurf: 'W',
+            Codex: 'CX',
+            Unknown: '?',
+        };
+
+        const IDE_FULL = {
+            Cursor: 'Cursor',
+            Trae: 'Trae',
+            ClaudeCode: 'Claude Code',
+            ClaudeDesktop: 'Claude Desktop',
+            VSCode: 'VS Code',
+            Windsurf: 'Windsurf',
+            Codex: 'Codex',
+            Cline: 'Cline',
+            Unknown: 'Unknown',
+        };
+
+        const IDE_TAG_CLASS = {
+            Cursor: 'tag-cursor',
+            Trae: 'tag-trae',
+            ClaudeCode: 'tag-claude',
+            VSCode: 'tag-vscode',
+            Windsurf: 'tag-cursor',
+            Codex: 'tag-cursor',
+        };
+
+        let sidebarExpanded = false;
+        let activeIdeFilter = '';  // '' = all, or 'Cursor', 'Trae', etc.
+
+        const i18n = {
+            en: {
+                brand: 'OpenBBox',
+                copyBtn: 'COPY ALL PROMPTS',
+                copied: 'COPIED!',
+                langBtn: '中文',
+                status: 'REAL-TIME TRACING',
+                emptyTitle: 'No Data Yet',
+                emptyDesc: 'Start coding with an AI IDE. OpenBBox will automatically capture your prompts and code changes.',
+                directorNote: "DIRECTOR'S NOTE",
+                totalLabel: 'TOTAL',
+                sourceLabel: 'SOURCE',
+                filesChanged: 'files changed',
+                scanBtn: '⚡ Scan',
+                scanTitle: '🔍 IDE / Agent Scanner',
+                scanSelect: 'SELECT SOURCES',
+                scanResults: 'DISCOVERED PROJECTS',
+                scanStart: 'START SCAN',
+                scanSelectAll: 'SELECT ALL',
+                scanRedetect: '🔄 RE-DETECT',
+                scanImport: 'IMPORT SELECTED',
+                tabResponse: 'AI RESPONSE',
+                tabMemo: 'MEMO',
+                tabReadme: 'README',
+                memoAdd: '+ New Note',
+                memoAddDeploy: '+ Server / Deploy',
+                memoEmpty: 'No memos yet',
+                memoEmptyHint: 'Add notes, decisions, or reminders for this project.',
+                memoSave: 'Save',
+                memoCancel: 'Cancel',
+                memoPlaceholder: 'Write a note... (supports Markdown)',
+                memoDeployPlaceholder: 'Server IP, port, env, credentials...',
+                readmeEmpty: 'No README yet',
+                readmeEmptyHint: 'Create a README for this project. Use templates or write from scratch.',
+                readmeAutoFill: 'Magic Fill',
+                readmePreview: 'Preview',
+                readmeEdit: 'Edit',
+                readmeExport: 'Export README.md',
+                readmeTemplatePick: 'Choose Template',
+                // Search & prompts
+                searchPlaceholder: '🔍 Search prompts...',
+                noPrompts: 'No prompts in this project.',
+                prompts: 'prompts',
+                allIdes: 'All',
+                step: 'STEP',
+                // Response panel
+                codeChanges: 'CODE CHANGES',
+                affectedFiles: 'AFFECTED FILES',
+                aiResponse: 'AI RESPONSE',
+                yourPrompt: 'YOUR PROMPT',
+                showAll: '▼ Show all',
+                collapse: '▲ Collapse',
+                changes: 'changes',
+                // Scan panel
+                scanning: 'Scanning...',
+                scanInit: 'Initializing scan...',
+                scanFailed: 'Scan connection failed',
+                scanDetecting: '🔄 Detecting...',
+                scanNoProjects: 'No projects discovered.',
+                scanImported: 'IMPORTED',
+                scanSelectProjects: 'Select projects to import',
+                scanImporting: 'Importing, please wait...',
+                scanImportStart: 'Starting import...',
+                scanImportFail: 'Import failed',
+                scanUnavailable: 'UNAVAILABLE',
+                scanAutoDetected: 'Auto-detected',
+                scanNewFound: 'Newly detected',
+                scanIdeCount: (n) => `⚡ ${n} IDEs`,
+                scanDetected: (names) => `Detected: ${names}`,
+                scanProjectsSelected: (n) => `${n} project(s) selected`,
+                scanImportedCount: (n) => `Imported ${n} record(s)`,
+                scanProjectsFound: (n) => `Done — ${n} project(s) found`,
+                // Memo
+                memos: 'Memos',
+                note: 'Note',
+                deploy: 'Deploy',
+                untitled: 'Untitled',
+                saved: 'Saved',
+                search: 'Search...',
+                syncToReadme: 'Sync to README',
+                pin: 'Pin',
+                unpin: 'Unpin',
+                newNote: '<h2>New Note</h2><p>Start writing...</p>',
+                newDeploy: '<h2>Deploy Record</h2><table><tr><th>Field</th><th>Value</th></tr><tr><td>Server IP</td><td></td></tr><tr><td>Port</td><td></td></tr><tr><td>Provider</td><td></td></tr><tr><td>OS / Env</td><td></td></tr><tr><td>Status</td><td></td></tr></table>',
+                // Memo deploy fields
+                serverIp: 'Server IP',
+                port: 'Port',
+                provider: 'Provider',
+                osEnv: 'OS / Env',
+                deployStatus: 'Status',
+                // Memo image controls
+                imgView: '🔍 View',
+                imgSmall: 'Small',
+                imgMedium: 'Medium',
+                imgFull: 'Full',
+                enterUrl: 'Enter URL:',
+                // Readme
+                readmeSplit: 'Split',
+                readmePlaceholder: '# Your README here...',
+                readmeSaved: 'Saved',
+                // Tooltips
+                expandCollapse: 'Expand / Collapse',
+                scanIdes: 'Scan IDEs',
+                redetectTitle: 'Re-scan for newly installed IDEs / AI Agents',
+            },
+            zh: {
+                brand: '脉络',
+                copyBtn: '复制所有提示词',
+                copied: '已复制！',
+                langBtn: 'EN',
+                status: '实时追踪中',
+                emptyTitle: '暂无数据',
+                emptyDesc: '使用 AI 编辑器开始编码，脉络会自动捕获你的提示词和代码变更。',
+                directorNote: '导演笔记',
+                totalLabel: '总计',
+                sourceLabel: '来源',
+                filesChanged: '个文件变更',
+                scanBtn: '⚡ 嗅探',
+                scanTitle: '🔍 IDE / Agent 嗅探器',
+                scanSelect: '选择嗅探源',
+                scanResults: '发现的项目',
+                scanStart: '开始嗅探',
+                scanSelectAll: '全选',
+                scanRedetect: '🔄 重新检测',
+                scanImport: '导入选中',
+                tabResponse: 'AI 回复',
+                tabMemo: '备忘录',
+                tabReadme: 'README',
+                memoAdd: '+ 新建笔记',
+                memoAddDeploy: '+ 服务器 / 部署',
+                memoEmpty: '暂无备忘录',
+                memoEmptyHint: '为这个项目添加笔记、决策记录或提醒。',
+                memoSave: '保存',
+                memoCancel: '取消',
+                memoPlaceholder: '写点什么...（支持 Markdown）',
+                memoDeployPlaceholder: '服务器IP、端口、环境、密钥...',
+                readmeEmpty: '暂无 README',
+                readmeEmptyHint: '为项目创建 README，可使用模板或从零开始。',
+                readmeAutoFill: '魔法填充',
+                readmePreview: '预览',
+                readmeEdit: '编辑',
+                readmeExport: '导出 README.md',
+                readmeTemplatePick: '选择模板',
+                // Search & prompts
+                searchPlaceholder: '🔍 搜索提示词...',
+                noPrompts: '该项目暂无提示词。',
+                prompts: '条提示词',
+                allIdes: '全部',
+                step: '步骤',
+                // Response panel
+                codeChanges: '代码变更',
+                affectedFiles: '涉及文件',
+                aiResponse: 'AI 回复',
+                yourPrompt: '你的指令',
+                showAll: '▼ 展开全部',
+                collapse: '▲ 收起',
+                changes: '处变更',
+                // Scan panel
+                scanning: '扫描中...',
+                scanInit: '正在初始化扫描...',
+                scanFailed: '扫描连接失败',
+                scanDetecting: '🔄 检测中...',
+                scanNoProjects: '未发现项目。',
+                scanImported: '已导入',
+                scanSelectProjects: '选择要导入的项目',
+                scanImporting: '导入中，请稍候...',
+                scanImportStart: '开始导入...',
+                scanImportFail: '导入失败',
+                scanUnavailable: '不可用',
+                scanAutoDetected: '自动发现新安装',
+                scanNewFound: '发现新安装',
+                scanIdeCount: (n) => `⚡ ${n} 个 IDE`,
+                scanDetected: (names) => `已检测: ${names}`,
+                scanProjectsSelected: (n) => `已选择 ${n} 个项目`,
+                scanImportedCount: (n) => `成功导入 ${n} 条记录`,
+                scanProjectsFound: (n) => `扫描完成 — 发现 ${n} 个项目`,
+                // Memo
+                memos: '备忘录',
+                note: '笔记',
+                deploy: '部署',
+                untitled: '无标题',
+                saved: '已保存',
+                search: '搜索...',
+                syncToReadme: '同步到 README',
+                pin: '置顶',
+                unpin: '取消置顶',
+                newNote: '<h2>新笔记</h2><p>开始写点什么...</p>',
+                newDeploy: '<h2>部署记录</h2><table><tr><th>字段</th><th>值</th></tr><tr><td>服务器 IP</td><td></td></tr><tr><td>端口</td><td></td></tr><tr><td>服务商</td><td></td></tr><tr><td>系统 / 环境</td><td></td></tr><tr><td>状态</td><td></td></tr></table>',
+                // Memo deploy fields
+                serverIp: '服务器 IP',
+                port: '端口',
+                provider: '服务商',
+                osEnv: '系统 / 环境',
+                deployStatus: '状态',
+                // Memo image controls
+                imgView: '🔍 查看',
+                imgSmall: '缩小',
+                imgMedium: '中等',
+                imgFull: '原始',
+                enterUrl: '输入链接 URL:',
+                // Readme
+                readmeSplit: '分栏',
+                readmePlaceholder: '# 在这里写 README...',
+                readmeSaved: '已保存',
+                // Tooltips
+                expandCollapse: '展开 / 收起',
+                scanIdes: '嗅探 IDE',
+                redetectTitle: '重新扫描新安装的 IDE / AI Agent',
+            },
+        };
+
+        function T(key) { return i18n[currentLang]?.[key] ?? i18n.en[key] ?? key; }
+        function Tf(key, ...args) { const v = T(key); return typeof v === 'function' ? v(...args) : v; }
+
+        // ── Init ──
+        document.getElementById('date-display').textContent = new Date().toISOString().split('T')[0];
+        if (currentLang !== 'en') applyLang();
+        initApp();
+        connectWebSocket();
+
+        async function initApp() {
+            await Promise.all([fetchData(), loadAdapters()]);
+            renderIdeSummary();
+            if (nodes.length === 0 && scanAdapters.some(a => a.detected)) {
+                openScanPanel();
+            }
+        }
+
+        // ── Data Fetching ──
+        async function fetchData() {
+            try {
+                const [projRes, nodeRes] = await Promise.all([
+                    fetch('/api/projects'),
+                    fetch('/api/nodes?limit=500'),
+                ]);
+                const projData = await projRes.json();
+                const nodeData = await nodeRes.json();
+                projects = projData.projects || [];
+                nodes = nodeData.nodes || [];
+
+                if (nodes.length === 0) {
+                    loadDemoData();
+                }
+
+                filteredNodes = nodes;
+                renderProjects();
+                renderPrompts();
+                if (filteredNodes.length > 0) selectNode(0);
+            } catch (e) {
+                loadDemoData();
+                filteredNodes = nodes;
+                renderProjects();
+                renderPrompts();
+                if (filteredNodes.length > 0) selectNode(0);
+            }
+        }
+
+        function loadDemoData() {
+            projects = [
+                { dna_id: 'demo-1', project_name: 'Demo', source_ide: 'Cursor', total_prompts: 3 },
+            ];
+            nodes = [
+                {
+                    id: 'd1', timestamp: '2026-02-19T14:02:00Z', project_name: 'Demo',
+                    source: { ide: 'Cursor', model_name: 'claude-3.5-sonnet' },
+                    intent: { raw_prompt: 'Initialize the project using FastAPI, setup async Redis connection pool and create the base model structure.', clean_title: 'Initialize FastAPI + Redis', context_files: [] },
+                    execution: { ai_response: 'I\'ve created the project skeleton with FastAPI and aioredis. The connection pool is configured for high-concurrency scenarios.', reasoning: 'Async Redis is essential for handling concurrent token logging without blocking the event loop.', diffs: [{ file_path: 'main.py', hunk: '+ from fastapi import FastAPI\n+ import aioredis\n+\n+ app = FastAPI(title="OpenBBox")\n+ redis = aioredis.from_url("redis://localhost")', change_type: 'added' }], affected_files: ['main.py'] },
+                    status: 'completed',
+                },
+                {
+                    id: 'd2', timestamp: '2026-02-19T14:15:00Z', project_name: 'Demo',
+                    source: { ide: 'ClaudeCode', model_name: 'claude-3.5-sonnet' },
+                    intent: { raw_prompt: 'Implement model rotation logic — auto-select the model with lowest usage when in rotation mode, support manual override.', clean_title: 'Model rotation logic', context_files: ['models/manager.py'] },
+                    execution: { ai_response: 'Added the rotation engine. It checks each model\'s current usage quota and selects the one with the lowest consumption.', reasoning: 'Round-robin is too naive. Usage-based rotation ensures cost optimization across providers.', diffs: [{ file_path: 'models/manager.py', hunk: '+ MODE_KEY = "selection_mode"\n+ MANUAL_MODEL_KEY = "manual_model_id"\n+\n+ def get_next_model(self, usage_map: dict) -> str:\n+     if self._get_mode() == "manual":\n+         return self.redis.get(self.MANUAL_MODEL_KEY)\n+     return min(usage_map, key=usage_map.get)', change_type: 'modified' }], affected_files: ['models/manager.py'] },
+                    status: 'completed',
+                },
+                {
+                    id: 'd3', timestamp: '2026-02-19T14:45:00Z', project_name: 'Demo',
+                    source: { ide: 'Trae', model_name: 'gpt-4o' },
+                    intent: { raw_prompt: 'Refactor all sync Redis calls to async. Add structured JSON logging for every prompt interaction to enable cost analysis.', clean_title: 'Async refactor + observability', context_files: ['main.py', 'config.py'] },
+                    execution: { ai_response: 'Refactored all I/O operations to async/await. Added structured logging with JSON format for downstream analysis.', reasoning: 'Shifting from simple text logs to structured JSON enables automated cost dashboards and anomaly detection.', diffs: [{ file_path: 'main.py', hunk: '- import redis\n+ import aioredis\n+\n+ async def get_data(key: str):\n+     return await redis.get(key)', change_type: 'modified' }, { file_path: 'utils/logger.py', hunk: '+ import json\n+ import logging\n+\n+ def log_prompt(event: str, tokens: int):\n+     logging.info(json.dumps({"event": event, "tokens": tokens}))', change_type: 'added' }], affected_files: ['main.py', 'utils/logger.py'] },
+                    status: 'completed',
+                },
+            ];
+        }
+
+        // ── Rendering ──
+        function renderProjects() {
+            const container = document.getElementById('project-list');
+            renderIdeFilterBar();
+
+            const projMap = new Map();
+
+            const filteredByIde = activeIdeFilter
+                ? nodes.filter(n => (n.source?.ide || 'Unknown') === activeIdeFilter)
+                : nodes;
+
+            projMap.set('__all__', {
+                project_name: 'ALL',
+                source_ides: [],
+                total_prompts: filteredByIde.length,
+            });
+
+            const countByProject = {};
+            for (const n of filteredByIde) {
+                const name = n.project_name || '(Other)';
+                countByProject[name] = (countByProject[name] || 0) + 1;
+            }
+
+            for (const p of projects) {
+                const name = p.project_name;
+                if (activeIdeFilter && !(p.source_ides || []).includes(activeIdeFilter)) continue;
+                if (countByProject[name]) {
+                    projMap.set(name, { ...p, total_prompts: countByProject[name] });
+                }
+            }
+            for (const name of Object.keys(countByProject)) {
+                if (!projMap.has(name)) {
+                    const ide = filteredByIde.find(n => n.project_name === name)?.source?.ide || 'Unknown';
+                    projMap.set(name, {
+                        project_name: name,
+                        source_ides: [ide],
+                        total_prompts: countByProject[name],
+                    });
+                }
+            }
+
+            let html = '';
+            let first = true;
+            for (const [key, proj] of projMap) {
+                const name = proj.project_name;
+                const letter = key === '__all__' ? '★' : name.charAt(0).toUpperCase();
+                const isActive = first ? 'active' : '';
+                const filterKey = key === '__all__' ? '' : name;
+                const ides = proj.source_ides || [];
+                const count = proj.total_prompts || 0;
+
+                // IDE badges (collapsed mode)
+                let badges = '';
+                for (const ide of ides) {
+                    const cls = IDE_COLORS[ide] || 'ide-cursor';
+                    const txt = IDE_SHORT[ide] || '?';
+                    badges += `<div class="ide-badge ${cls}">${txt}</div>`;
+                }
+                if (!badges && key !== '__all__') {
+                    badges = `<div class="ide-badge ide-cursor">C</div>`;
+                }
+
+                // IDE tags (expanded mode)
+                let ideTags = '';
+                for (const ide of ides) {
+                    const tagCls = IDE_TAG_CLASS[ide] || 'tag-cursor';
+                    const fullName = IDE_FULL[ide] || ide;
+                    ideTags += `<span class="ide-tag ${tagCls}" translate="no">${fullName}</span>`;
+                }
+                if (!ideTags && key !== '__all__') {
+                    ideTags = `<span class="ide-tag tag-cursor" translate="no">Cursor</span>`;
+                }
+
+                const tooltipIdes = ides.map(i => IDE_FULL[i] || i).join(', ') || (key === '__all__' ? 'All IDEs' : 'Cursor');
+                const safeIdes = tooltipIdes.replace(/"/g, '&quot;');
+
+                html += `
+                    <div class="project-btn ${isActive}" data-project="${filterKey}"
+                         data-tt-name="${escapeHtml(name)}" data-tt-ide="${safeIdes}" data-tt-count="${count} prompts"
+                         onclick="selectProject(this, '${filterKey.replace(/'/g, "\\'")}')">
+                        <span class="proj-icon-letter">${letter}</span>
+                        <div class="proj-icon">${letter}</div>
+                        <div class="proj-info">
+                            <div class="proj-info-name">${escapeHtml(name)}</div>
+                            <div class="proj-info-meta">
+                                ${ideTags}
+                                <span style="color:var(--text-muted)">${count} prompts</span>
+                            </div>
+                        </div>
+                        ${badges}
+                    </div>
+                `;
+                first = false;
+            }
+            container.innerHTML = html;
+        }
+
+        function toggleSidebar() {
+            const col = document.getElementById('col-source');
+            sidebarExpanded = !sidebarExpanded;
+            col.classList.toggle('expanded', sidebarExpanded);
+            document.getElementById('sidebar-toggle').classList.toggle('expanded', sidebarExpanded);
+        }
+
+        function setSidebarExpanded(expanded) {
+            const col = document.getElementById('col-source');
+            sidebarExpanded = expanded;
+            col.classList.toggle('expanded', sidebarExpanded);
+            document.getElementById('sidebar-toggle').classList.toggle('expanded', sidebarExpanded);
+        }
+
+        function renderIdeFilterBar() {
+            const bar = document.getElementById('ide-filter-bar');
+            const ideSet = new Set();
+            for (const n of nodes) {
+                const ide = n.source?.ide || 'Unknown';
+                if (ide !== 'Unknown') ideSet.add(ide);
+            }
+            if (ideSet.size <= 1) {
+                bar.innerHTML = '';
+                return;
+            }
+            const zh = currentLang === 'zh';
+            let html = `<div class="ide-filter-chip ${activeIdeFilter === '' ? 'active' : ''}" onclick="filterByIde('')">${zh ? '全部' : 'All'}</div>`;
+            for (const ide of ideSet) {
+                const short = IDE_SHORT[ide] || ide.charAt(0);
+                const full = IDE_FULL[ide] || ide;
+                const label = sidebarExpanded ? full : short;
+                html += `<div class="ide-filter-chip ${activeIdeFilter === ide ? 'active' : ''}" onclick="filterByIde('${ide}')" translate="no">${label}</div>`;
+            }
+            bar.innerHTML = html;
+        }
+
+        function filterByIde(ide) {
+            activeIdeFilter = ide;
+            renderIdeFilterBar();
+            renderProjects();
+            selectProject(null, activeProjectId);
+        }
+
+        // ── Drag resize handle ──
+        (function initDragResize() {
+            const handle = document.getElementById('col-resize-handle');
+            const col = document.getElementById('col-source');
+            let startX = 0;
+            let dragging = false;
+
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startX = e.clientX;
+                dragging = true;
+                handle.classList.add('dragging');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!dragging) return;
+                const x = e.clientX;
+                if (x > 160 && !sidebarExpanded) {
+                    setSidebarExpanded(true);
+                    renderIdeFilterBar();
+                } else if (x < 100 && sidebarExpanded) {
+                    setSidebarExpanded(false);
+                    renderIdeFilterBar();
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                if (!dragging) return;
+                dragging = false;
+                handle.classList.remove('dragging');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            });
+        })();
+
+        // ── Sidebar tooltip (fixed position, hover-driven) ──
+        (function initSidebarTooltip() {
+            const tooltip = document.getElementById('sidebar-tooltip');
+            const ttName = tooltip.querySelector('.tt-name');
+            const ttIde = tooltip.querySelector('.tt-ide');
+            const ttCount = tooltip.querySelector('.tt-count');
+
+            document.addEventListener('mouseover', (e) => {
+                if (sidebarExpanded) return;
+                const btn = e.target.closest('.project-btn');
+                if (!btn) return;
+                const name = btn.dataset.ttName;
+                const ide = btn.dataset.ttIde;
+                const count = btn.dataset.ttCount;
+                if (!name) return;
+
+                ttName.textContent = name;
+                ttIde.textContent = ide;
+                ttCount.textContent = count;
+
+                const rect = btn.getBoundingClientRect();
+                tooltip.style.left = (rect.right + 10) + 'px';
+                tooltip.style.top = (rect.top + rect.height / 2) + 'px';
+                tooltip.style.transform = 'translateY(-50%)';
+                tooltip.classList.add('visible');
+            });
+
+            document.addEventListener('mouseout', (e) => {
+                const btn = e.target.closest('.project-btn');
+                if (btn) {
+                    const related = e.relatedTarget;
+                    if (!related || !btn.contains(related)) {
+                        tooltip.classList.remove('visible');
+                    }
+                }
+            });
+        })();
+
+        function renderPrompts() {
+            const container = document.getElementById('prompt-stream');
+            const t = i18n[currentLang];
+            const displayNodes = filteredNodes;
+
+            if (displayNodes.length === 0) {
+                container.innerHTML = `<div class="empty-state"><p style="color:var(--text-muted);padding:20px;">${activeProjectId ? 'No prompts in this project.' : t.emptyDesc}</p></div>`;
+                document.getElementById('stat-total').textContent = `${t.totalLabel}: 0`;
+                return;
+            }
+
+            let html = '';
+            displayNodes.forEach((node, i) => {
+                const ide = node.source?.ide || 'Unknown';
+                const sourceClass = IDE_COLORS[ide] || 'ide-cursor';
+                const time = new Date(node.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const filesCount = node.execution?.affected_files?.length || 0;
+                const isActive = i === activeNodeIndex ? 'active' : '';
+                const projLabel = !activeProjectId && node.project_name ? `<span style="color:var(--accent-purple);font-size:9px;margin-left:4px;">${node.project_name}</span>` : '';
+
+                html += `
+                    <div class="prompt-card ${isActive}" data-index="${i}" onclick="selectNode(${i})">
+                        <div class="prompt-meta">
+                            <span class="prompt-index">#${String(i + 1).padStart(3, '0')}</span>
+                            <span class="prompt-source ${sourceClass}" translate="no">${ide}</span>${projLabel}
+                            <span class="prompt-time">${time}</span>
+                        </div>
+                        <div class="prompt-text">${escapeHtml(cleanPrompt(node.intent.raw_prompt))}</div>
+                        ${filesCount > 0 ? `<div class="prompt-impact">${filesCount} ${t.filesChanged}</div>` : ''}
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+            const sources = [...new Set(displayNodes.map(n => n.source?.ide || 'Unknown'))];
+            document.getElementById('stat-total').textContent = `${t.totalLabel}: ${displayNodes.length}`;
+            document.getElementById('stat-source').textContent = `${t.sourceLabel}: ${sources.join(' / ')}`;
+        }
+
+        function simpleMarkdown(text) {
+            if (!text) return '';
+            let html = escapeHtml(text);
+            html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+                `<pre><code>${code.trim()}</code></pre>`);
+            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+            html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:6px;margin:8px 0;">');
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+
+            const lines = html.split('\n');
+            const result = [];
+            let inList = false, listType = '';
+            for (const line of lines) {
+                const ulMatch = line.match(/^[\-\*] (.+)/);
+                const olMatch = line.match(/^(\d+)\.\s+(.+)/);
+                if (ulMatch) {
+                    if (!inList || listType !== 'ul') { if (inList) result.push(`</${listType}>`); result.push('<ul>'); inList = true; listType = 'ul'; }
+                    result.push(`<li>${ulMatch[1]}</li>`);
+                } else if (olMatch) {
+                    if (!inList || listType !== 'ol') { if (inList) result.push(`</${listType}>`); result.push('<ol>'); inList = true; listType = 'ol'; }
+                    result.push(`<li>${olMatch[2]}</li>`);
+                } else {
+                    if (inList) { result.push(`</${listType}>`); inList = false; }
+                    if (line.startsWith('<h') || line.startsWith('<pre>')) {
+                        result.push(line);
+                    } else if (line.trim() === '') {
+                        result.push('');
+                    } else {
+                        result.push(`<p>${line}</p>`);
+                    }
+                }
+            }
+            if (inList) result.push(`</${listType}>`);
+            return result.join('\n').replace(/<p><\/p>/g, '');
+        }
+
+        function extractFilesFromResponse(text) {
+            if (!text) return [];
+            const files = new Set();
+            const patterns = [
+                /`([^\s`]+\.[a-zA-Z]{1,10})`/g,
+                /(?:文件|file|path|路径)[：:]\s*`?([^\s`\n]+\.[a-zA-Z]{1,10})`?/gi,
+                /(?:created?|modified|updated|wrote|writing|创建|修改|更新)\s+`?([^\s`\n]+\.[a-zA-Z]{1,10})`?/gi,
+            ];
+            for (const pat of patterns) {
+                let m;
+                while ((m = pat.exec(text)) !== null) {
+                    const f = m[1].replace(/^[`'"]+|[`'"]+$/g, '');
+                    if (f.includes('/') || f.includes('.')) {
+                        const name = f.split('/').pop();
+                        if (name.length > 2 && name.length < 80) files.add(f);
+                    }
+                }
+            }
+            return [...files].slice(0, 20);
+        }
+
+        function renderResponse(node) {
+            const area = document.getElementById('display-area');
+            const t = i18n[currentLang];
+
+            if (!node) {
+                area.innerHTML = `<div class="empty-state"><h2>${t.emptyTitle}</h2><p>${t.emptyDesc}</p></div>`;
+                return;
+            }
+
+            const ide = (node.source?.ide || 'Unknown').toLowerCase();
+            const ideName = node.source?.ide || 'Unknown';
+            const model = node.source?.model_name || '';
+            const rawPrompt = cleanPrompt(node.intent?.raw_prompt || node.intent?.clean_title || '');
+            const time = new Date(node.timestamp).toLocaleString();
+            const promptId = 'prompt-text-' + Date.now();
+            const needCollapse = rawPrompt.length > 200 || rawPrompt.split('\n').length > 3;
+
+            const idePillClass = ide.includes('cursor') ? 'ide-cursor'
+                : ide.includes('trae') ? 'ide-trae'
+                : ide.includes('claude') ? 'ide-claude'
+                : ide.includes('codex') ? 'ide-codex'
+                : ide.includes('vscode') ? 'ide-vscode' : '';
+
+            let diffsHtml = '';
+            if (node.execution?.diffs?.length) {
+                diffsHtml += `<div class="resp-section-label">${T('codeChanges')}</div>`;
+                for (const diff of node.execution.diffs) {
+                    const badgeClass = diff.change_type || 'modified';
+                    let addCount = 0, delCount = 0, lineNum = 0;
+                    const lines = diff.hunk.split('\n').map(line => {
+                        lineNum++;
+                        let cls = 'ctx';
+                        if (line.startsWith('+') && !line.startsWith('+++')) { cls = 'add'; addCount++; }
+                        else if (line.startsWith('-') && !line.startsWith('---')) { cls = 'del'; delCount++; }
+                        else if (line.startsWith('@@')) { cls = 'hunk'; }
+                        return `<div class="diff-line ${cls}"><span class="diff-line-num">${lineNum}</span><span class="diff-line-content">${escapeHtml(line)}</span></div>`;
+                    }).join('');
+                    diffsHtml += `
+                        <div class="diff-container">
+                            <div class="diff-header">
+                                <span class="diff-file">${escapeHtml(diff.file_path)}</span>
+                                <span class="diff-badge ${badgeClass}">${diff.change_type}</span>
+                            </div>
+                            <div class="diff-body">${lines}</div>
+                            <div class="diff-stats-bar">
+                                <span class="stat-add">+${addCount}</span>
+                                <span class="stat-del">-${delCount}</span>
+                                <span>${addCount + delCount} changes</span>
+                            </div>
+                        </div>`;
+                }
+            }
+
+            const aiResponse = node.execution?.ai_response || '';
+            const mentionedFiles = extractFilesFromResponse(aiResponse);
+            let filesHtml = '';
+            if (mentionedFiles.length > 0) {
+                filesHtml = `
+                    <div class="resp-section-label">${T('affectedFiles')}</div>
+                    <div class="resp-files-list">
+                        ${mentionedFiles.map(f => `<span class="resp-file-chip">${escapeHtml(f.split('/').slice(-2).join('/'))}</span>`).join('')}
+                    </div>`;
+            }
+
+            let responseHtml = '';
+            if (aiResponse) {
+                responseHtml = `
+                    <div class="resp-section-label">${T('aiResponse')}</div>
+                    <div class="resp-ai-content">${simpleMarkdown(aiResponse)}</div>`;
+            }
+
+            area.innerHTML = `
+                <div class="response-section active">
+                    <div style="max-width: 760px;">
+                        <div class="resp-prompt-box">
+                            <div class="resp-section-label" style="margin-top:0">${T('yourPrompt')}</div>
+                            <div class="resp-prompt-text ${needCollapse ? 'collapsed' : ''}" id="${promptId}">${escapeHtml(rawPrompt)}</div>
+                            ${needCollapse ? `<span class="resp-prompt-toggle" onclick="togglePromptExpand(this, '${promptId}')">${T('showAll')}</span>` : ''}
+                        </div>
+                        <div class="resp-subtitle">
+                            <span class="ide-pill ${idePillClass}" translate="no">${ideName}</span>
+                            ${model ? `<span>· ${escapeHtml(model)}</span>` : ''}
+                            <span>· ${time}</span>
+                        </div>
+                        ${responseHtml}
+                        ${filesHtml}
+                        ${diffsHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function togglePromptExpand(btn, textId) {
+            const el = document.getElementById(textId);
+            if (!el) return;
+            const isCollapsed = el.classList.contains('collapsed');
+            el.classList.toggle('collapsed');
+            const t = i18n[currentLang];
+            btn.textContent = isCollapsed
+                ? T('collapse')
+                : T('showAll');
+        }
+
+        // ── Display Tab Switching ──
+        let activeDisplayTab = 'response';
+        let memoList = [];
+        let activeMemoId = null;
+        let memoSearchQuery = '';
+        let memoAutoSaveTimer = null;
+
+        function switchDisplayTab(tab) {
+            activeDisplayTab = tab;
+            const t = i18n[currentLang];
+            document.getElementById('tab-response').classList.toggle('active', tab === 'response');
+            document.getElementById('tab-memo').classList.toggle('active', tab === 'memo');
+            document.getElementById('tab-readme').classList.toggle('active', tab === 'readme');
+            document.getElementById('tab-response').textContent = t.tabResponse;
+            document.getElementById('tab-memo').textContent = t.tabMemo;
+            document.getElementById('tab-readme').textContent = t.tabReadme;
+            document.getElementById('display-area').style.display = tab === 'response' ? '' : 'none';
+            document.getElementById('memo-area').style.display = tab === 'memo' ? '' : 'none';
+            document.getElementById('readme-area').style.display = tab === 'readme' ? '' : 'none';
+            if (tab === 'memo') loadMemos();
+            if (tab === 'readme') loadReadme();
+        }
+
+        function getMemoProjectKey() {
+            return activeProjectId || '';
+        }
+
+        async function loadMemos() {
+            const key = getMemoProjectKey();
+            if (!key) { memoList = []; renderMemoApp(); return; }
+            try {
+                const res = await fetch(`/api/memos/${encodeURIComponent(key)}`);
+                const data = await res.json();
+                memoList = data.memos || [];
+            } catch (e) { memoList = []; }
+            if (activeMemoId && !memoList.find(m => m.id === activeMemoId)) activeMemoId = null;
+            renderMemoApp();
+        }
+
+        function renderMemoApp() {
+            const area = document.getElementById('memo-area');
+            const t = i18n[currentLang];
+
+            if (!activeProjectId) {
+                area.innerHTML = `<div class="memo-empty"><div class="memo-empty-icon">📋</div><div>${t.memoEmpty}</div></div>`;
+                return;
+            }
+
+            const filtered = memoSearchQuery
+                ? memoList.filter(m => m.content.toLowerCase().includes(memoSearchQuery.toLowerCase()))
+                : memoList;
+
+            let listHtml = '';
+            for (const m of filtered) {
+                const isActive = m.id === activeMemoId;
+                const plainText = stripHtml(m.content);
+                const firstLine = plainText.split('\n').filter(l => l.trim())[0]?.substring(0, 40) || T('untitled');
+                const snippet = plainText.split('\n').filter(l => l.trim()).slice(1).join(' ').substring(0, 50);
+                const mType = m.memo_type || 'note';
+                const timeStr = new Date(m.updated_at).toLocaleDateString();
+                listHtml += `
+                    <div class="memo-item ${isActive ? 'active' : ''}" onclick="selectMemo(${m.id})">
+                        <div class="memo-item-title">${m.pinned ? '<span class="memo-item-pin">📌 </span>' : ''}${escapeHtml(firstLine)}</div>
+                        ${snippet ? `<div class="memo-item-snippet">${escapeHtml(snippet)}</div>` : ''}
+                        <div class="memo-item-footer">
+                            <span class="memo-item-badge ${mType}">${mType.toUpperCase()}</span>
+                            <span>${timeStr}</span>
+                        </div>
+                    </div>`;
+            }
+
+            const activeMemo = memoList.find(m => m.id === activeMemoId);
+
+            let detailHtml = '';
+            if (activeMemo) {
+                const mType = activeMemo.memo_type || 'note';
+                const meta = activeMemo.meta || {};
+                const pinLabel = activeMemo.pinned ? '📌' : '📍';
+                const pinClass = activeMemo.pinned ? 'pin-active' : '';
+                const readmeOn = meta.sync_readme ? 'readme-on' : '';
+                const timeStr = new Date(activeMemo.updated_at).toLocaleString();
+
+                let deployBar = '';
+                if (mType === 'deploy') {
+                    deployBar = `
+                        <div class="memo-deploy-bar">
+                            <div class="memo-deploy-grid">
+                                <div class="memo-deploy-field"><span class="memo-deploy-label">Server IP</span><input class="memo-deploy-input" id="md-ip" value="${escapeHtml(meta.server_ip || '')}" onchange="saveMemoMeta()"></div>
+                                <div class="memo-deploy-field"><span class="memo-deploy-label">Port</span><input class="memo-deploy-input" id="md-port" value="${escapeHtml(meta.port || '')}" onchange="saveMemoMeta()"></div>
+                                <div class="memo-deploy-field"><span class="memo-deploy-label">Provider</span><input class="memo-deploy-input" id="md-provider" value="${escapeHtml(meta.provider || '')}" onchange="saveMemoMeta()"></div>
+                                <div class="memo-deploy-field"><span class="memo-deploy-label">OS / Env</span><input class="memo-deploy-input" id="md-env" value="${escapeHtml(meta.environment || '')}" onchange="saveMemoMeta()"></div>
+                                <div class="memo-deploy-field"><span class="memo-deploy-label">Status</span><input class="memo-deploy-input" id="md-status" value="${escapeHtml(meta.status || '')}" onchange="saveMemoMeta()"></div>
+                            </div>
+                        </div>`;
+                }
+
+                const editorContent = activeMemo.content.startsWith('<') ? activeMemo.content : simpleMarkdown(activeMemo.content);
+
+                detailHtml = `
+                    <div class="memo-detail-header">
+                        <div class="memo-detail-time">${timeStr} <span class="memo-saved-indicator" id="memo-saved">Saved</span></div>
+                        <div class="memo-detail-actions">
+                            <button class="memo-detail-btn ${readmeOn}" onclick="toggleMemoReadmeSync()" title="Sync to README">README</button>
+                            <button class="memo-detail-btn ${pinClass}" onclick="toggleMemoPin(${activeMemo.id}, ${!activeMemo.pinned})">${pinLabel}</button>
+                            <button class="memo-detail-btn danger" onclick="deleteMemo(${activeMemo.id})">🗑️</button>
+                        </div>
+                    </div>
+                    ${deployBar}
+                    <div class="memo-toolbar">
+                        <button class="memo-tb-btn" onclick="memoExec('bold')" title="Bold"><b>B</b></button>
+                        <button class="memo-tb-btn" onclick="memoExec('italic')" title="Italic"><i>I</i></button>
+                        <button class="memo-tb-btn" onclick="memoExec('underline')" title="Underline"><u>U</u></button>
+                        <div class="memo-tb-sep"></div>
+                        <button class="memo-tb-btn" onclick="memoExec('formatBlock','<h1>')" title="H1">H1</button>
+                        <button class="memo-tb-btn" onclick="memoExec('formatBlock','<h2>')" title="H2">H2</button>
+                        <button class="memo-tb-btn" onclick="memoExec('formatBlock','<h3>')" title="H3">H3</button>
+                        <div class="memo-tb-sep"></div>
+                        <button class="memo-tb-btn" onclick="memoExec('insertUnorderedList')" title="Bullet List">•</button>
+                        <button class="memo-tb-btn" onclick="memoExec('insertOrderedList')" title="Numbered List">1.</button>
+                        <button class="memo-tb-btn" onclick="memoExec('formatBlock','<blockquote>')" title="Quote">❝</button>
+                        <div class="memo-tb-sep"></div>
+                        <button class="memo-tb-btn" onclick="memoInsertCode()" title="Code">&lt;/&gt;</button>
+                        <button class="memo-tb-btn" onclick="memoInsertLink()" title="Link">🔗</button>
+                        <button class="memo-tb-btn" onclick="memoInsertImage()" title="Image">🖼</button>
+                    </div>
+                    <div class="memo-detail-body">
+                        <div class="memo-detail-editor" id="memo-editor-main" contenteditable="true" data-placeholder="${t.memoPlaceholder}" oninput="onMemoInput()">${editorContent}</div>
+                    </div>`;
+            } else {
+                detailHtml = `<div class="memo-empty"><div class="memo-empty-icon">📝</div><div style="font-size:12px;">${t.memoEmptyHint}</div></div>`;
+            }
+
+            area.innerHTML = `
+                <div class="memo-wrap">
+                    <div class="memo-sidebar">
+                        <div class="memo-sidebar-header">
+                            <div class="memo-sidebar-top">
+                                <span class="memo-sidebar-title">${T('memos')} <span class="memo-sidebar-count">${memoList.length}</span></span>
+                                <button class="memo-new-btn" onclick="createNewMemo('note')" title="${t.memoAdd}">+</button>
+                            </div>
+                            <input class="memo-search" placeholder="${T('search')}" value="${escapeHtml(memoSearchQuery)}" oninput="memoSearchQuery=this.value;renderMemoApp()">
+                        </div>
+                        <div class="memo-list">
+                            ${listHtml || `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">${t.memoEmpty}</div>`}
+                        </div>
+                        <div style="padding:8px;border-top:1px solid var(--border);display:flex;gap:6px;">
+                            <button class="memo-detail-btn" style="flex:1;font-size:10px;" onclick="createNewMemo('note')">+ ${T('note')}</button>
+                            <button class="memo-detail-btn" style="flex:1;font-size:10px;color:var(--accent-green);" onclick="createNewMemo('deploy')">+ ${T('deploy')}</button>
+                        </div>
+                    </div>
+                    <div class="memo-detail">
+                        ${detailHtml}
+                    </div>
+                </div>`;
+        }
+
+        function selectMemo(id) {
+            activeMemoId = id;
+            renderMemoApp();
+            setTimeout(() => {
+                document.getElementById('memo-editor-main')?.focus();
+                initMemoImgHandlers();
+            }, 50);
+        }
+
+        async function createNewMemo(type) {
+            const key = getMemoProjectKey();
+            if (!key) return;
+            const t = i18n[currentLang];
+            const defaultContent = type === 'deploy'
+                ? (currentLang === 'zh' ? '<h2>部署记录</h2><p><br></p>' : '<h2>Deploy Record</h2><p><br></p>')
+                : (currentLang === 'zh' ? '<h2>新笔记</h2><p><br></p>' : '<h2>New Note</h2><p><br></p>');
+            try {
+                const res = await fetch('/api/memos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_key: key, content: defaultContent, memo_type: type }),
+                });
+                const memo = await res.json();
+                activeMemoId = memo.id;
+                await loadMemos();
+                setTimeout(() => {
+                    const editor = document.getElementById('memo-editor-main');
+                    if (editor) {
+                        editor.focus();
+                        const range = document.createRange();
+                        range.selectNodeContents(editor);
+                        range.collapse(false);
+                        const sel = window.getSelection();
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
+                    initMemoImgHandlers();
+                }, 80);
+            } catch (e) { console.error('Failed to create memo', e); }
+        }
+
+        function onMemoInput() {
+            clearTimeout(memoAutoSaveTimer);
+            memoAutoSaveTimer = setTimeout(() => autoSaveMemo(), 800);
+        }
+
+        function memoExec(cmd, val) {
+            document.execCommand(cmd, false, val || null);
+            document.getElementById('memo-editor-main')?.focus();
+            onMemoInput();
+        }
+
+        function memoInsertCode() {
+            const sel = window.getSelection();
+            const text = sel?.toString() || 'code';
+            document.execCommand('insertHTML', false, `<code>${escapeHtml(text)}</code>`);
+            onMemoInput();
+        }
+
+        function memoInsertLink() {
+            const url = prompt(currentLang === 'zh' ? '输入链接 URL:' : 'Enter URL:');
+            if (url) document.execCommand('createLink', false, url);
+            onMemoInput();
+        }
+
+        function memoInsertImage() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = async () => {
+                const file = input.files?.[0];
+                if (!file) return;
+                await uploadAndInsertImage(file);
+            };
+            input.click();
+        }
+
+        async function uploadAndInsertImage(file) {
+            const formData = new FormData();
+            formData.append('file', file, file.name || 'image.png');
+            try {
+                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.url) {
+                    document.execCommand('insertHTML', false, `<img src="${data.url}" style="max-width:100%;border-radius:8px;margin:8px 0;">`);
+                    onMemoInput();
+                }
+            } catch (err) { console.error('Image upload failed', err); }
+        }
+
+        document.addEventListener('paste', async function(e) {
+            const editor = document.getElementById('memo-editor-main');
+            if (!editor || !editor.contains(document.activeElement) && document.activeElement !== editor) return;
+
+            const items = e.clipboardData?.items;
+            if (!items) return;
+
+            let hasImage = false;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    hasImage = true;
+                    const file = item.getAsFile();
+                    if (file) await uploadAndInsertImage(file);
+                    break;
+                }
+            }
+
+            if (!hasImage) {
+                const htmlData = e.clipboardData?.getData('text/html');
+                if (htmlData) {
+                    e.preventDefault();
+                    const clean = sanitizePastedHtml(htmlData);
+                    document.execCommand('insertHTML', false, clean);
+                    onMemoInput();
+                }
+            }
+        });
+
+        function sanitizePastedHtml(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            tmp.querySelectorAll('script,style,meta,link').forEach(el => el.remove());
+            tmp.querySelectorAll('*').forEach(el => {
+                const tag = el.tagName.toLowerCase();
+                const allowed = ['h1','h2','h3','h4','p','br','strong','b','em','i','u','a','ul','ol','li','blockquote','code','pre','img','table','thead','tbody','tr','th','td','hr','span','div','sup','sub'];
+                if (!allowed.includes(tag)) {
+                    el.replaceWith(...el.childNodes);
+                    return;
+                }
+                const keepAttrs = ['href','src','alt','width'];
+                for (const attr of [...el.attributes]) {
+                    if (!keepAttrs.includes(attr.name)) el.removeAttribute(attr.name);
+                }
+            });
+            return tmp.innerHTML;
+        }
+
+        // ── Memo Image Interactions ──
+        let _selectedImg = null;
+        let _imgBar = null;
+        let _imgResizeHandle = null;
+        let _imgResizing = false;
+
+        function ensureTrailingParagraph(editor) {
+            if (!editor) return;
+            const last = editor.lastElementChild;
+            if (!last || last.tagName === 'IMG' || (last.tagName !== 'P' && last.tagName !== 'DIV' && last.tagName !== 'BR')) {
+                const p = document.createElement('p');
+                p.innerHTML = '<br>';
+                editor.appendChild(p);
+            }
+        }
+
+        function initMemoImgHandlers() {
+            const editor = document.getElementById('memo-editor-main');
+            if (!editor) return;
+
+            ensureTrailingParagraph(editor);
+
+            editor.addEventListener('click', function(e) {
+                if (e.target.tagName === 'IMG') {
+                    e.preventDefault();
+                    selectMemoImg(e.target);
+                } else {
+                    deselectMemoImg();
+                    if (e.target === editor) {
+                        ensureTrailingParagraph(editor);
+                        const lastP = editor.lastElementChild;
+                        if (lastP) {
+                            const range = document.createRange();
+                            range.selectNodeContents(lastP);
+                            range.collapse(false);
+                            const sel = window.getSelection();
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        }
+                    }
+                }
+            });
+
+            editor.addEventListener('dblclick', function(e) {
+                if (e.target.tagName === 'IMG') {
+                    e.preventDefault();
+                    openLightbox(e.target.src);
+                }
+            });
+
+            const obs = new MutationObserver(() => ensureTrailingParagraph(editor));
+            obs.observe(editor, { childList: true, subtree: true });
+        }
+
+        function selectMemoImg(img) {
+            deselectMemoImg();
+            _selectedImg = img;
+            img.classList.add('memo-img-selected');
+
+            _imgBar = document.createElement('div');
+            _imgBar.className = 'memo-img-bar';
+
+            const btnZoom = document.createElement('button');
+            btnZoom.textContent = T('imgView');
+            btnZoom.onclick = (e) => { e.stopPropagation(); openLightbox(img.src); };
+
+            const btnSmall = document.createElement('button');
+            btnSmall.textContent = T('imgSmall');
+            btnSmall.onclick = (e) => { e.stopPropagation(); resizeMemoImg('50%'); };
+
+            const btnMed = document.createElement('button');
+            btnMed.textContent = T('imgMedium');
+            btnMed.onclick = (e) => { e.stopPropagation(); resizeMemoImg('75%'); };
+
+            const btnFull = document.createElement('button');
+            btnFull.textContent = T('imgFull');
+            btnFull.onclick = (e) => { e.stopPropagation(); resizeMemoImg('100%'); };
+
+            const btnDel = document.createElement('button');
+            btnDel.className = 'danger';
+            btnDel.textContent = '🗑️';
+            btnDel.onclick = (e) => { e.stopPropagation(); deleteMemoImg(); };
+
+            _imgBar.append(btnZoom, btnSmall, btnMed, btnFull, btnDel);
+
+            const body = document.querySelector('.memo-detail-body');
+            if (body) {
+                body.style.position = 'relative';
+                body.appendChild(_imgBar);
+                positionImgBar();
+            }
+
+            _imgResizeHandle = document.createElement('div');
+            _imgResizeHandle.className = 'memo-img-resize-handle';
+            if (body) {
+                body.appendChild(_imgResizeHandle);
+                positionResizeHandle();
+            }
+            _imgResizeHandle.addEventListener('mousedown', startImgResize);
+        }
+
+        function positionImgBar() {
+            if (!_selectedImg || !_imgBar) return;
+            const body = document.querySelector('.memo-detail-body');
+            if (!body) return;
+            const bodyRect = body.getBoundingClientRect();
+            const imgRect = _selectedImg.getBoundingClientRect();
+            _imgBar.style.left = (imgRect.left - bodyRect.left) + 'px';
+            _imgBar.style.top = (imgRect.top - bodyRect.top - 38) + 'px';
+        }
+
+        function positionResizeHandle() {
+            if (!_selectedImg || !_imgResizeHandle) return;
+            const body = document.querySelector('.memo-detail-body');
+            if (!body) return;
+            const bodyRect = body.getBoundingClientRect();
+            const imgRect = _selectedImg.getBoundingClientRect();
+            _imgResizeHandle.style.left = (imgRect.right - bodyRect.left - 6) + 'px';
+            _imgResizeHandle.style.top = (imgRect.bottom - bodyRect.top - 6) + 'px';
+        }
+
+        function deselectMemoImg() {
+            if (_selectedImg) _selectedImg.classList.remove('memo-img-selected');
+            _selectedImg = null;
+            if (_imgBar) { _imgBar.remove(); _imgBar = null; }
+            if (_imgResizeHandle) { _imgResizeHandle.remove(); _imgResizeHandle = null; }
+        }
+
+        function resizeMemoImg(width) {
+            if (!_selectedImg) return;
+            _selectedImg.style.width = width;
+            _selectedImg.style.height = 'auto';
+            onMemoInput();
+            setTimeout(() => { positionImgBar(); positionResizeHandle(); }, 50);
+        }
+
+        function deleteMemoImg() {
+            if (!_selectedImg) return;
+            _selectedImg.remove();
+            deselectMemoImg();
+            onMemoInput();
+        }
+
+        function startImgResize(e) {
+            if (!_selectedImg) return;
+            e.preventDefault();
+            _imgResizing = true;
+            const startX = e.clientX;
+            const startW = _selectedImg.offsetWidth;
+
+            function onMove(ev) {
+                if (!_imgResizing || !_selectedImg) return;
+                const diff = ev.clientX - startX;
+                const newW = Math.max(60, startW + diff);
+                _selectedImg.style.width = newW + 'px';
+                _selectedImg.style.height = 'auto';
+                positionImgBar();
+                positionResizeHandle();
+            }
+            function onUp() {
+                _imgResizing = false;
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+                onMemoInput();
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        }
+
+        function openLightbox(src) {
+            const lb = document.getElementById('memo-lightbox');
+            const img = document.getElementById('memo-lightbox-img');
+            if (!lb || !img) return;
+            img.src = src;
+            lb.classList.add('open');
+            document.addEventListener('keydown', lightboxEsc);
+        }
+
+        function closeLightbox() {
+            const lb = document.getElementById('memo-lightbox');
+            if (lb) lb.classList.remove('open');
+            document.removeEventListener('keydown', lightboxEsc);
+        }
+
+        function lightboxEsc(e) {
+            if (e.key === 'Escape') closeLightbox();
+        }
+
+        async function autoSaveMemo() {
+            if (!activeMemoId) return;
+            const editor = document.getElementById('memo-editor-main');
+            if (!editor) return;
+            const content = editor.innerHTML;
+            try {
+                await fetch(`/api/memos/${activeMemoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content }),
+                });
+                const msg = document.getElementById('memo-saved');
+                if (msg) { msg.classList.add('show'); setTimeout(() => msg.classList.remove('show'), 1500); }
+                const memo = memoList.find(m => m.id === activeMemoId);
+                if (memo) { memo.content = content; memo.updated_at = new Date().toISOString(); }
+                updateMemoListOnly();
+            } catch (e) { console.error('Memo auto-save failed', e); }
+        }
+
+        function updateMemoListOnly() {
+            const listEl = document.querySelector('.memo-list');
+            if (!listEl) return;
+            const filtered = memoSearchQuery
+                ? memoList.filter(m => m.content.toLowerCase().includes(memoSearchQuery.toLowerCase()))
+                : memoList;
+            let html = '';
+            for (const m of filtered) {
+                const isActive = m.id === activeMemoId;
+                const plainText = stripHtml(m.content);
+                const firstLine = plainText.split('\n').filter(l => l.trim())[0]?.substring(0, 40) || T('untitled');
+                const snippet = plainText.split('\n').filter(l => l.trim()).slice(1).join(' ').substring(0, 50);
+                const mType = m.memo_type || 'note';
+                const timeStr = new Date(m.updated_at).toLocaleDateString();
+                html += `
+                    <div class="memo-item ${isActive ? 'active' : ''}" onclick="selectMemo(${m.id})">
+                        <div class="memo-item-title">${m.pinned ? '<span class="memo-item-pin">📌 </span>' : ''}${escapeHtml(firstLine)}</div>
+                        ${snippet ? `<div class="memo-item-snippet">${escapeHtml(snippet)}</div>` : ''}
+                        <div class="memo-item-footer">
+                            <span class="memo-item-badge ${mType}">${mType.toUpperCase()}</span>
+                            <span>${timeStr}</span>
+                        </div>
+                    </div>`;
+            }
+            listEl.innerHTML = html || `<div style="padding:20px;text-align:center;color:var(--text-muted);font-size:12px;">${i18n[currentLang].memoEmpty}</div>`;
+        }
+
+        async function saveMemoMeta() {
+            if (!activeMemoId) return;
+            const meta = {
+                server_ip: (document.getElementById('md-ip')?.value || '').trim(),
+                port: (document.getElementById('md-port')?.value || '').trim(),
+                provider: (document.getElementById('md-provider')?.value || '').trim(),
+                environment: (document.getElementById('md-env')?.value || '').trim(),
+                status: (document.getElementById('md-status')?.value || '').trim(),
+            };
+            const memo = memoList.find(m => m.id === activeMemoId);
+            if (memo) meta.sync_readme = memo.meta?.sync_readme || false;
+            try {
+                await fetch(`/api/memos/${activeMemoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ meta }),
+                });
+                if (memo) memo.meta = meta;
+            } catch (e) { console.error('Failed to save meta', e); }
+        }
+
+        async function toggleMemoReadmeSync() {
+            if (!activeMemoId) return;
+            const memo = memoList.find(m => m.id === activeMemoId);
+            if (!memo) return;
+            const newVal = !(memo.meta?.sync_readme);
+            const meta = { ...(memo.meta || {}), sync_readme: newVal };
+            try {
+                await fetch(`/api/memos/${activeMemoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ meta }),
+                });
+                memo.meta = meta;
+                renderMemoApp();
+            } catch (e) { console.error('Failed to toggle readme sync', e); }
+        }
+
+        async function toggleMemoPin(memoId, pinned) {
+            try {
+                await fetch(`/api/memos/${memoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pinned }),
+                });
+                await loadMemos();
+            } catch (e) { console.error('Failed to toggle pin', e); }
+        }
+
+        async function deleteMemo(memoId) {
+            try {
+                await fetch(`/api/memos/${memoId}`, { method: 'DELETE' });
+                if (activeMemoId === memoId) activeMemoId = null;
+                await loadMemos();
+            } catch (e) { console.error('Failed to delete memo', e); }
+        }
+
+        // ── README Simulator ──
+        let readmeMode = 'split';
+        let readmeContent = '';
+        let readmeAutoSaveTimer = null;
+
+        const README_TEMPLATES = {
+            default: {
+                name: 'Minimal',
+                nameZh: '极简风',
+                desc: 'Clean and simple. Perfect for tools & scripts.',
+                descZh: '干净简洁，适合工具和脚本类项目。',
+                content: `# {{PROJECT_NAME}}\n\n> One-line description of your project.\n\n## Features\n\n- Feature 1\n- Feature 2\n- Feature 3\n\n## Getting Started\n\n\`\`\`bash\n# Install\npip install {{PROJECT_NAME}}\n\n# Run\n{{PROJECT_NAME}} start\n\`\`\`\n\n## License\n\nMIT\n`,
+            },
+            pro: {
+                name: 'Professional',
+                nameZh: '专业版',
+                desc: 'Full-featured with badges, screenshots, and deployment.',
+                descZh: '完整版，含徽章、截图和部署说明。',
+                content: `# {{PROJECT_NAME}}\n\n![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.0.0-green)\n\n> A brief, compelling description.\n\n## Screenshots\n\n<!-- Add your screenshots here -->\n\n## Features\n\n- **Feature 1** — Description\n- **Feature 2** — Description\n- **Feature 3** — Description\n\n## Tech Stack\n\n| Layer | Technology |\n|-------|------------|\n| Frontend | React / Vue |\n| Backend | Python / Node |\n| Database | SQLite / PostgreSQL |\n\n## Quick Start\n\n\`\`\`bash\ngit clone https://github.com/yourname/{{PROJECT_NAME}}.git\ncd {{PROJECT_NAME}}\npip install -r requirements.txt\npython main.py\n\`\`\`\n\n## Deployment\n\n<!-- Server info from your memos will appear here -->\n\n## Contributing\n\nPRs welcome! Please read CONTRIBUTING.md first.\n\n## License\n\nMIT License - see [LICENSE](LICENSE) for details.\n`,
+            },
+            pulse: {
+                name: 'Pulse (AI Lineage)',
+                nameZh: '脉络版 (AI 演进)',
+                desc: 'Showcases AI development history powered by OpenBBox.',
+                descZh: '展示 AI 驱动的开发演进历史，OpenBBox 专属。',
+                content: `# {{PROJECT_NAME}}\n\n> Built with AI. Documented by [OpenBBox](https://github.com/openbbox).\n\n## AI Development Lineage\n\n<!-- Auto-filled by Magic Fill -->\n\n| # | Intent | IDE | Time |\n|---|--------|-----|------|\n\n## Features\n\n<!-- Auto-extracted from your AI conversations -->\n\n## Deployment\n\n<!-- Auto-filled from your deploy memos -->\n\n## Project Structure\n\n\`\`\`text\n<!-- Auto-generated -->\n\`\`\`\n\n## How This Was Built\n\nThis project was developed using AI-assisted coding. The entire development lineage — every prompt, every decision, every code change — was captured by **OpenBBox (脉络)**.\n\n## License\n\nMIT\n`,
+            },
+        };
+
+        async function loadReadme() {
+            const key = getMemoProjectKey();
+            if (!key) {
+                renderReadmeEmpty();
+                return;
+            }
+            try {
+                const res = await fetch(`/api/readme/${encodeURIComponent(key)}`);
+                const data = await res.json();
+                readmeContent = data.markdown || '';
+            } catch (e) {
+                readmeContent = '';
+            }
+            renderReadmeEditor();
+        }
+
+        function renderReadmeEmpty() {
+            const area = document.getElementById('readme-area');
+            const t = i18n[currentLang];
+            area.innerHTML = `<div class="memo-empty"><div class="memo-empty-icon">📄</div><div>${t.readmeEmpty}</div><div style="font-size:12px;margin-top:4px;">${t.readmeEmptyHint}</div></div>`;
+        }
+
+        function renderReadmeEditor() {
+            const area = document.getElementById('readme-area');
+            const t = i18n[currentLang];
+            const isNew = !readmeContent;
+
+            let templateGrid = '';
+            if (isNew) {
+                templateGrid = `<div class="readme-template-grid">`;
+                for (const [id, tpl] of Object.entries(README_TEMPLATES)) {
+                    const name = currentLang === 'zh' ? tpl.nameZh : tpl.name;
+                    const desc = currentLang === 'zh' ? tpl.descZh : tpl.desc;
+                    templateGrid += `<div class="readme-template-card" onclick="applyReadmeTemplate('${id}')"><div class="readme-template-name">${name}</div><div class="readme-template-desc">${desc}</div></div>`;
+                }
+                templateGrid += `</div>`;
+            }
+
+            const splitDisplay = readmeMode === 'split' ? 'flex' : (readmeMode === 'edit' ? 'flex' : 'none');
+            const editorDisplay = readmeMode === 'preview' ? 'none' : 'block';
+            const previewDisplay = readmeMode === 'edit' ? 'none' : 'block';
+
+            area.innerHTML = `
+                <div class="readme-container">
+                    <div class="readme-toolbar">
+                        <button class="readme-btn primary" onclick="readmeAutoFill(this)">${t.readmeAutoFill}</button>
+                        <button class="readme-btn export" onclick="readmeExport()">${t.readmeExport}</button>
+                        <span class="readme-saved-msg" id="readme-saved-msg">Saved</span>
+                        <div class="readme-mode-toggle">
+                            <button class="readme-mode-btn ${readmeMode === 'edit' ? 'active' : ''}" onclick="setReadmeMode('edit')">${t.readmeEdit}</button>
+                            <button class="readme-mode-btn ${readmeMode === 'split' ? 'active' : ''}" onclick="setReadmeMode('split')">Split</button>
+                            <button class="readme-mode-btn ${readmeMode === 'preview' ? 'active' : ''}" onclick="setReadmeMode('preview')">${t.readmePreview}</button>
+                        </div>
+                    </div>
+                    ${templateGrid}
+                    <div class="readme-editor-wrap" style="display:${splitDisplay}">
+                        <textarea class="readme-editor" id="readme-md-input" style="display:${editorDisplay}" oninput="onReadmeInput()" placeholder="# Your README here...">${escapeHtml(readmeContent)}</textarea>
+                        <div class="readme-preview" id="readme-preview-pane" style="display:${previewDisplay}">${readmeToHtml(readmeContent)}</div>
+                    </div>
+                </div>`;
+        }
+
+        function applyReadmeTemplate(id) {
+            const tpl = README_TEMPLATES[id];
+            if (!tpl) return;
+            const projName = activeProjectId || 'MyProject';
+            readmeContent = tpl.content.replace(/\{\{PROJECT_NAME\}\}/g, projName);
+            renderReadmeEditor();
+            autoSaveReadme();
+        }
+
+        function setReadmeMode(mode) {
+            readmeMode = mode;
+            renderReadmeEditor();
+        }
+
+        function onReadmeInput() {
+            const input = document.getElementById('readme-md-input');
+            if (!input) return;
+            readmeContent = input.value;
+            const preview = document.getElementById('readme-preview-pane');
+            if (preview) preview.innerHTML = readmeToHtml(readmeContent);
+            clearTimeout(readmeAutoSaveTimer);
+            readmeAutoSaveTimer = setTimeout(() => autoSaveReadme(), 1500);
+        }
+
+        async function autoSaveReadme() {
+            const key = getMemoProjectKey();
+            if (!key) return;
+            try {
+                await fetch('/api/readme', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_key: key, markdown: readmeContent }),
+                });
+                const msg = document.getElementById('readme-saved-msg');
+                if (msg) { msg.classList.add('show'); setTimeout(() => msg.classList.remove('show'), 2000); }
+            } catch (e) { console.error('Failed to save readme', e); }
+        }
+
+        async function readmeAutoFill(btn) {
+            const key = getMemoProjectKey();
+            if (!key) return;
+            const origText = btn.textContent;
+            btn.textContent = '...';
+            btn.disabled = true;
+            try {
+                const res = await fetch(`/api/readme/${encodeURIComponent(key)}/autofill`);
+                const data = await res.json();
+
+                let md = readmeContent || README_TEMPLATES.pulse.content.replace(/\{\{PROJECT_NAME\}\}/g, key);
+
+                if (data.features?.length > 0) {
+                    let lineageTable = '| # | Intent | IDE | Time |\n|---|--------|-----|------|\n';
+                    data.features.forEach((f, i) => {
+                        const shortTime = f.timestamp.split('T')[0];
+                        lineageTable += `| ${i + 1} | ${f.title.substring(0, 60)} | ${f.ide} | ${shortTime} |\n`;
+                    });
+                    md = md.replace(/\| # \| Intent \| IDE \| Time \|[\s\S]*?\n\n/, lineageTable + '\n');
+
+                    let featuresList = '';
+                    const seen = new Set();
+                    for (const f of data.features.slice(0, 8)) {
+                        const short = f.title.substring(0, 50);
+                        if (!seen.has(short)) { featuresList += `- ${short}\n`; seen.add(short); }
+                    }
+                    if (featuresList) {
+                        md = md.replace(/## Features\n\n<!-- Auto-extracted.*?-->\n/, `## Features\n\n${featuresList}`);
+                    }
+                }
+
+                if (data.deploy_memos?.length > 0) {
+                    let deploySection = '';
+                    for (const dm of data.deploy_memos) {
+                        const m = dm.meta || {};
+                        if (m.server_ip) deploySection += `- **Server**: ${m.server_ip}${m.port ? ':' + m.port : ''}\n`;
+                        if (m.provider) deploySection += `- **Provider**: ${m.provider}\n`;
+                        if (m.environment) deploySection += `- **Environment**: ${m.environment}\n`;
+                        if (dm.content) deploySection += `- ${dm.content.split('\\n')[0]}\n`;
+                    }
+                    if (deploySection) {
+                        md = md.replace(/## Deployment\n\n<!-- Auto-filled.*?-->\n/, `## Deployment\n\n${deploySection}`);
+                    }
+                }
+
+                if (data.ides_used?.length > 0) {
+                    md = md.replace(/## How This Was Built[\s\S]*?## License/,
+                        `## How This Was Built\n\nThis project was developed using **${data.ides_used.join(', ')}** with ${data.total_prompts} AI conversations captured by **OpenBBox**.\n\n## License`);
+                }
+
+                readmeContent = md;
+                renderReadmeEditor();
+                autoSaveReadme();
+            } catch (e) {
+                console.error('AutoFill failed', e);
+            } finally {
+                btn.textContent = origText;
+                btn.disabled = false;
+            }
+        }
+
+        async function readmeExport() {
+            const key = getMemoProjectKey();
+            if (!key || !readmeContent) return;
+            const blob = new Blob([readmeContent], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'README.md';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function readmeToHtml(md) {
+            if (!md) return '<p style="color:#999;text-align:center;padding:40px;">Start typing or choose a template...</p>';
+            return simpleMarkdown(md);
+        }
+
+        // ── Interactions ──
+        function selectNode(index) {
+            activeNodeIndex = index;
+            document.querySelectorAll('.prompt-card').forEach((card, i) => {
+                card.classList.toggle('active', i === index);
+            });
+            renderResponse(filteredNodes[index]);
+        }
+
+        function selectProject(el, name) {
+            if (el) {
+                document.querySelectorAll('.project-btn').forEach(b => b.classList.remove('active'));
+                el.classList.add('active');
+            } else {
+                const btn = document.querySelector(`.project-btn[data-project="${name || ''}"]`);
+                if (btn) {
+                    document.querySelectorAll('.project-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                }
+            }
+            activeProjectId = name;
+
+            let base = activeIdeFilter
+                ? nodes.filter(n => (n.source?.ide || 'Unknown') === activeIdeFilter)
+                : nodes;
+
+            filteredNodes = name
+                ? base.filter(n => (n.project_name || '') === name)
+                : base;
+
+            renderPrompts();
+            if (filteredNodes.length > 0) selectNode(0);
+            if (activeDisplayTab === 'memo') loadMemos();
+            if (activeDisplayTab === 'readme') loadReadme();
+        }
+
+        // Scroll-linked selection
+        document.getElementById('prompt-stream').addEventListener('scroll', function () {
+            const cards = this.querySelectorAll('.prompt-card');
+            let closestIndex = 0;
+            let closestDist = Infinity;
+            cards.forEach((card, i) => {
+                const rect = card.getBoundingClientRect();
+                const dist = Math.abs(rect.top - 200);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestIndex = i;
+                }
+            });
+            if (closestIndex !== activeNodeIndex) {
+                selectNode(closestIndex);
+            }
+        });
+
+        // Copy all prompts
+        function copyAllPrompts() {
+            const t = i18n[currentLang];
+            const text = filteredNodes.map((n, i) =>
+                `STEP ${String(i + 1).padStart(3, '0')}:\n${cleanPrompt(n.intent.raw_prompt)}`
+            ).join('\n\n---\n\n');
+
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.textContent = t.copied;
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = t.copyBtn;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        function filterPrompts(query) {
+            const items = document.querySelectorAll('.prompt-item');
+            const q = query.toLowerCase().trim();
+            items.forEach(item => {
+                if (!q) {
+                    item.style.display = '';
+                    return;
+                }
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+
+        // Language toggle
+        function applyLang() {
+            const t = i18n[currentLang];
+            document.getElementById('brand-name').textContent = t.brand;
+            document.getElementById('copy-btn').textContent = t.copyBtn;
+            document.getElementById('lang-btn').textContent = t.langBtn;
+            document.getElementById('status-text').textContent = t.status;
+            document.getElementById('scan-title').textContent = t.scanTitle;
+            document.getElementById('scan-label-select').textContent = t.scanSelect;
+            document.getElementById('scan-label-results').textContent = t.scanResults;
+            document.getElementById('btn-start-scan').textContent = t.scanStart;
+            document.getElementById('btn-redetect').textContent = t.scanRedetect;
+            document.getElementById('btn-select-all').textContent = t.scanSelectAll;
+            document.getElementById('btn-import').textContent = t.scanImport;
+            const footerInfo = document.getElementById('scan-footer-info');
+            if (footerInfo && selectedImportKeys.size === 0) {
+                footerInfo.textContent = t.scanSelectProjects;
+            }
+            renderIdeGrid();
+            document.getElementById('tab-response').textContent = t.tabResponse;
+            document.getElementById('tab-memo').textContent = t.tabMemo;
+            document.getElementById('tab-readme').textContent = t.tabReadme;
+            // Search placeholder
+            const searchInput = document.querySelector('.search-input');
+            if (searchInput) searchInput.placeholder = t.searchPlaceholder;
+            // Scan panel tooltips
+            const redetectBtn = document.getElementById('btn-redetect');
+            if (redetectBtn) redetectBtn.title = t.redetectTitle;
+            // Sidebar toggle tooltip
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            if (sidebarToggle) sidebarToggle.title = t.expandCollapse;
+
+            renderIdeSummary();
+            renderPrompts();
+            if (filteredNodes[activeNodeIndex]) renderResponse(filteredNodes[activeNodeIndex]);
+            if (activeDisplayTab === 'memo') loadMemos();
+            if (activeDisplayTab === 'readme') renderReadmeEditor();
+        }
+
+        function toggleLang() {
+            currentLang = currentLang === 'en' ? 'zh' : 'en';
+            localStorage.setItem('openbbox_lang', currentLang);
+            applyLang();
+        }
+
+        // WebSocket
+        function connectWebSocket() {
+            try {
+                const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+                ws = new WebSocket(`${protocol}//${location.host}/ws`);
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'new_node') {
+                        nodes.push(data.node);
+                        renderPrompts();
+                    }
+                };
+                ws.onclose = () => setTimeout(connectWebSocket, 3000);
+            } catch (e) {
+                // WebSocket not available (static mode)
+            }
+        }
+
+        // ── Scan Panel Logic ──
+        let scanAdapters = [];
+        let scanResults = [];
+        let selectedScanIdes = new Set();
+        let selectedImportKeys = new Set();
+        let _autoDetectTimer = null;
+
+        async function openScanPanel() {
+            document.getElementById('scan-overlay').classList.add('open');
+            await loadAdapters();
+            _startAutoDetect();
+        }
+
+        function closeScanPanel() {
+            document.getElementById('scan-overlay').classList.remove('open');
+            hideIdeTooltip();
+            _stopAutoDetect();
+        }
+
+        function _startAutoDetect() {
+            _stopAutoDetect();
+            _autoDetectTimer = setInterval(async () => {
+                const prevNames = new Set(scanAdapters.filter(a => a.detected).map(a => a.name));
+                await loadAdapters();
+                const nowNames = new Set(scanAdapters.filter(a => a.detected).map(a => a.name));
+                for (const name of nowNames) {
+                    if (!prevNames.has(name)) {
+                        addScanLog('🆕', T('scanAutoDetected') + ': ' + name, 'log-success');
+                        document.getElementById('scan-progress').style.display = 'block';
+                    }
+                }
+            }, 30000);
+        }
+
+        function _stopAutoDetect() {
+            if (_autoDetectTimer) {
+                clearInterval(_autoDetectTimer);
+                _autoDetectTimer = null;
+            }
+        }
+
+        let _prevDetectedSet = new Set();
+
+        async function loadAdapters() {
+            const prevDetected = new Set(_prevDetectedSet);
+            try {
+                const res = await fetch('/api/adapters');
+                const data = await res.json();
+                scanAdapters = data.adapters || [];
+            } catch (e) {
+                scanAdapters = [
+                    { name: 'Cursor', detected: true, db_count: 0 },
+                    { name: 'Trae', detected: false, db_count: 0 },
+                    { name: 'ClaudeCode', detected: false, db_count: 0 },
+                    { name: 'ClaudeDesktop', detected: false, db_count: 0, cloud_only: true },
+                    { name: 'VSCode', detected: false, db_count: 0 },
+                    { name: 'Codex', detected: false, db_count: 0 },
+                ];
+            }
+            const nowDetected = new Set(scanAdapters.filter(a => a.detected).map(a => a.name));
+            for (const a of scanAdapters) {
+                a._isNew = a.detected && prevDetected.size > 0 && !prevDetected.has(a.name);
+            }
+            _prevDetectedSet = nowDetected;
+
+            if (selectedScanIdes.size === 0) {
+                scanAdapters.filter(a => a.detected && !a.cloud_only).forEach(a => selectedScanIdes.add(a.name));
+            } else {
+                scanAdapters.filter(a => a._isNew && !a.cloud_only).forEach(a => selectedScanIdes.add(a.name));
+            }
+            renderIdeGrid();
+            renderIdeSummary();
+        }
+
+        function renderIdeSummary() {
+            const detected = scanAdapters.filter(a => a.detected);
+            const trigger = document.getElementById('scan-trigger');
+            if (detected.length > 0) {
+                const names = detected.map(a => a.name).join(', ');
+                trigger.textContent = Tf('scanIdeCount', detected.length);
+                trigger.title = Tf('scanDetected', names);
+            }
+        }
+
+        const _ideInstallHints = {
+            ClaudeCode: {
+                zh: { title: '未检测到 Claude Code', body: '需要安装 Claude Code CLI 才能扫描本地对话记录', cmd: 'npm i -g @anthropic-ai/claude-code' },
+                en: { title: 'Claude Code not found', body: 'Install the Claude Code CLI to scan local conversation history', cmd: 'npm i -g @anthropic-ai/claude-code' }
+            },
+            ClaudeDesktop: {
+                zh: { title: '对话存储在云端', body: 'Claude Desktop 的对话数据保存在 Anthropic 服务器上，无法本地读取。如需扫描 Claude 对话，请安装 Claude Code CLI', cmd: 'npm i -g @anthropic-ai/claude-code' },
+                en: { title: 'Conversations stored in cloud', body: 'Claude Desktop saves conversations on Anthropic servers — cannot be read locally. Install Claude Code CLI to scan Claude conversations', cmd: 'npm i -g @anthropic-ai/claude-code' }
+            },
+            VSCode: {
+                zh: { title: '未检测到 VS Code', body: '如已安装，请确认 VS Code 在默认路径，或点击「重新检测」', cmd: '' },
+                en: { title: 'VS Code not found', body: 'If installed, make sure VS Code is in the default path, or click "RE-DETECT"', cmd: '' }
+            },
+            Cursor: {
+                zh: { title: '未检测到 Cursor', body: '如已安装，请确认 Cursor 在默认路径，或点击「重新检测」', cmd: '' },
+                en: { title: 'Cursor not found', body: 'If installed, make sure Cursor is in the default path, or click "RE-DETECT"', cmd: '' }
+            },
+            Trae: {
+                zh: { title: '未检测到 Trae', body: '如已安装，请确认 Trae 在默认路径，或点击「重新检测」', cmd: '' },
+                en: { title: 'Trae not found', body: 'If installed, make sure Trae is in the default path, or click "RE-DETECT"', cmd: '' }
+            },
+                Windsurf: {
+                    zh: { title: '未检测到 Windsurf', body: '如已安装，请确认 Windsurf 在默认路径，或点击「重新检测」', cmd: '' },
+                    en: { title: 'Windsurf not found', body: 'If installed, make sure Windsurf is in the default path, or click "RE-DETECT"', cmd: '' }
+                },
+                Codex: {
+                    zh: { title: '未检测到 Codex', body: '需要安装 Codex CLI 才能扫描本地对话记录', cmd: 'npm i -g @openai/codex' },
+                    en: { title: 'Codex not found', body: 'Install the Codex CLI to scan local conversation history', cmd: 'npm i -g @openai/codex' }
+                }
+            };
+
+        function _getIdeTooltipData(a) {
+            const detected = a.detected;
+            const isCloud = a.cloud_only && detected;
+            if (detected && !isCloud) return null;
+            const lang = currentLang === 'zh' ? 'zh' : 'en';
+            return (isCloud ? _ideInstallHints.ClaudeDesktop : _ideInstallHints[a.name])?.[lang] || null;
+        }
+
+        function renderIdeGrid() {
+            const grid = document.getElementById('scan-ide-grid');
+            const ideIcons = {
+                Cursor: `<svg viewBox="0 0 24 24" fill="#e0e0e0" xmlns="http://www.w3.org/2000/svg"><path d="M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z"/></svg>`,
+                VSCode: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.583 0L9.04 7.647 3.788 3.574.5 4.97v14.06l3.288 1.396 5.252-4.074L17.583 24 23.5 21.42V2.58L17.583 0zM17.5 17.77l-5.458-4.226V10.46L17.5 6.23v11.54zM6.396 12.002l-2.857-2.18v4.36l2.857-2.18z" fill="#007ACC"/></svg>`,
+                Trae: `<svg viewBox="0 0 24 24" fill="#4ADE80" xmlns="http://www.w3.org/2000/svg"><path d="M24 20.541H3.428v-3.426H0V3.4h24V20.54zM3.428 17.115h17.144V6.827H3.428v10.288zm8.573-5.196l-2.425 2.424-2.424-2.424 2.424-2.424 2.425 2.424zm6.857-.001l-2.424 2.423-2.425-2.423 2.425-2.425 2.424 2.425z"/></svg>`,
+                ClaudeCode: `<svg viewBox="0 0 24 24" fill="#D97757" xmlns="http://www.w3.org/2000/svg"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>`,
+                ClaudeDesktop: `<svg viewBox="0 0 24 24" fill="#D97757" xmlns="http://www.w3.org/2000/svg"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>`,
+                Windsurf: `<svg viewBox="0 0 24 24" fill="#00BCD4" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M23.78 5.004h-.228a2.187 2.187 0 00-2.18 2.196v4.912c0 .98-.804 1.775-1.76 1.775a1.818 1.818 0 01-1.472-.773L13.168 5.95a2.197 2.197 0 00-1.81-.95c-1.134 0-2.154.972-2.154 2.173v4.94c0 .98-.797 1.775-1.76 1.775-.57 0-1.136-.289-1.472-.773L.408 5.098C.282 4.918 0 5.007 0 5.228v4.284c0 .216.066.426.188.604l5.475 7.889c.324.466.8.812 1.351.938 1.377.316 2.645-.754 2.645-2.117V11.89c0-.98.787-1.775 1.76-1.775h.002c.586 0 1.135.288 1.472.773l4.972 7.163a2.15 2.15 0 001.81.95c1.158 0 2.151-.973 2.151-2.173v-4.939c0-.98.787-1.775 1.76-1.775h.194c.122 0 .22-.1.22-.222V5.225a.221.221 0 00-.22-.222z" fill-rule="evenodd"/></svg>`,
+                Codex: `<svg viewBox="0 0 24 24" fill="#10A37F" xmlns="http://www.w3.org/2000/svg"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>`,
+            };
+            const zh = currentLang === 'zh';
+
+            const available = scanAdapters.filter(a => a.detected && !(a.cloud_only && a.detected));
+            const unavailable = scanAdapters.filter(a => !a.detected || (a.cloud_only && a.detected));
+
+            function renderCard(a) {
+                const detected = a.detected;
+                const isCloud = a.cloud_only && detected;
+                const checked = detected && !isCloud && selectedScanIdes.has(a.name);
+                const icon = ideIcons[a.name] || '📦';
+                const newBadge = a._isNew ? ` <span style="font-size:8px;font-weight:700;color:#000;background:var(--accent);padding:1px 4px;border-radius:3px;vertical-align:middle;">NEW</span>` : '';
+
+                let statusHtml;
+                if (isCloud) {
+                    statusHtml = `<span class="scan-ide-status" style="color:var(--text-muted)">${zh ? '已安装' : 'installed'}</span>
+                                  <span class="scan-ide-cloud-tag">${zh ? '☁ 云端不可扫描' : '☁ cloud only'}</span>`;
+                } else if (detected) {
+                    statusHtml = `<span class="scan-ide-status">● ${zh ? '已检测' : 'detected'}</span>`;
+                } else {
+                    statusHtml = `<span class="scan-ide-status" style="color:var(--text-muted)">○ ${zh ? '未安装' : 'not installed'}</span>`;
+                }
+
+                const canClick = detected && !isCloud;
+                const needsTooltip = !detected || isCloud;
+
+                return `
+                    <div class="scan-ide-item ${checked ? 'checked' : ''} ${!detected ? 'disabled' : ''} ${isCloud ? 'cloud-only' : ''} ${a._isNew ? 'new-found' : ''}"
+                         onclick="${canClick ? `toggleIde('${a.name}')` : ''}"
+                         ${needsTooltip ? `onmouseenter="showIdeTooltip(event,'${a.name}')" onmouseleave="hideIdeTooltip()"` : ''}
+                         data-ide="${a.name}">
+                        <div class="scan-ide-check">${checked ? '✓' : (isCloud ? '☁' : '')}</div>
+                        <span class="scan-ide-icon">${icon}</span>
+                        <span class="scan-ide-name" translate="no">${IDE_FULL[a.name] || a.name}${newBadge}</span>
+                        ${statusHtml}
+                    </div>
+                `;
+            }
+
+            let html = available.map(renderCard).join('');
+            if (unavailable.length > 0) {
+                html += `<div class="scan-ide-unavailable-divider">${T('scanUnavailable')}</div>`;
+                html += unavailable.map(renderCard).join('');
+            }
+            grid.innerHTML = html;
+        }
+
+        function showIdeTooltip(e, name) {
+            const adapter = scanAdapters.find(a => a.name === name);
+            if (!adapter) return;
+            const hint = _getIdeTooltipData(adapter);
+            if (!hint) return;
+
+            let tip = document.getElementById('scan-ide-tooltip-float');
+            if (!tip) {
+                tip = document.createElement('div');
+                tip.id = 'scan-ide-tooltip-float';
+                tip.className = 'scan-ide-tooltip-anchor';
+                document.body.appendChild(tip);
+            }
+            tip.innerHTML = `
+                <div class="scan-ide-tooltip-title">${hint.title}</div>
+                <div class="scan-ide-tooltip-body">${hint.body}</div>
+                ${hint.cmd ? `<code class="scan-ide-tooltip-cmd">${hint.cmd}</code>` : ''}
+            `;
+            const rect = e.currentTarget.getBoundingClientRect();
+            tip.style.left = (rect.right + 10) + 'px';
+            tip.style.top = (rect.top + rect.height / 2) + 'px';
+            tip.style.transform = 'translateY(-50%)';
+            tip.classList.add('visible');
+        }
+
+        function hideIdeTooltip() {
+            const tip = document.getElementById('scan-ide-tooltip-float');
+            if (tip) tip.classList.remove('visible');
+        }
+
+        async function redetectAdapters() {
+            const btn = document.getElementById('btn-redetect');
+            btn.classList.add('detecting');
+            btn.textContent = T('scanDetecting');
+            await loadAdapters();
+            const newOnes = scanAdapters.filter(a => a._isNew);
+            btn.classList.remove('detecting');
+            btn.textContent = T('scanRedetect');
+            if (newOnes.length > 0) {
+                const names = newOnes.map(a => a.name).join(', ');
+                addScanLog('🆕', T('scanNewFound') + ': ' + names, 'log-success');
+                document.getElementById('scan-progress').style.display = 'block';
+            }
+        }
+
+        function toggleIde(name) {
+            if (selectedScanIdes.has(name)) {
+                selectedScanIdes.delete(name);
+            } else {
+                selectedScanIdes.add(name);
+            }
+            renderIdeGrid();
+        }
+
+        function toggleAllIdes() {
+            const scannable = scanAdapters.filter(a => a.detected && !a.cloud_only);
+            if (selectedScanIdes.size === scannable.length) {
+                selectedScanIdes.clear();
+            } else {
+                scannable.forEach(a => selectedScanIdes.add(a.name));
+            }
+            renderIdeGrid();
+        }
+
+        let scanStartTime = 0;
+
+        function addScanLog(icon, text, cls = 'log-info') {
+            const log = document.getElementById('scan-log');
+            const elapsed = ((Date.now() - scanStartTime) / 1000).toFixed(1);
+            log.innerHTML += `<div class="scan-log-line ${cls}"><span class="log-icon">${icon}</span><span>[${elapsed}s] ${escapeHtml(text)}</span></div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function setScanPercent(pct) {
+            document.getElementById('scan-progress-bar').style.width = pct + '%';
+            document.getElementById('scan-progress-percent').textContent = pct + '%';
+        }
+
+        async function startScan() {
+            const btn = document.getElementById('btn-start-scan');
+            const progress = document.getElementById('scan-progress');
+            const progressText = document.getElementById('scan-progress-text');
+
+            if (selectedScanIdes.size === 0) {
+                scanAdapters.filter(a => a.detected).forEach(a => selectedScanIdes.add(a.name));
+                renderIdeGrid();
+            }
+
+            btn.disabled = true;
+            progress.classList.add('active');
+            document.getElementById('scan-log').innerHTML = '';
+            document.getElementById('scan-spinner').style.display = '';
+            setScanPercent(0);
+            progressText.textContent = T('scanInit');
+            scanStartTime = Date.now();
+
+            const params = [...selectedScanIdes].map(n => `adapters=${encodeURIComponent(n)}`).join('&');
+
+            try {
+                const response = await fetch(`/api/scan/discover?${params}`);
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        try {
+                            const event = JSON.parse(line.slice(6));
+                            handleScanEvent(event);
+                        } catch (e) { /* skip malformed */ }
+                    }
+                }
+
+                // Process any remaining buffer
+                if (buffer.startsWith('data: ')) {
+                    try {
+                        const event = JSON.parse(buffer.slice(6));
+                        handleScanEvent(event);
+                    } catch (e) { /* skip */ }
+                }
+            } catch (e) {
+                progressText.textContent = T('scanFailed');
+                addScanLog('✗', `Error: ${e.message}`, 'log-err');
+            }
+
+            document.getElementById('scan-spinner').style.display = 'none';
+            btn.disabled = false;
+        }
+
+        function handleScanEvent(event) {
+            const progressText = document.getElementById('scan-progress-text');
+            const zh = currentLang === 'zh';
+
+            if (event.type === 'heartbeat') return;
+
+            if (event.type === 'progress') {
+                const pct = event.percent || 0;
+                setScanPercent(pct);
+
+                if (event.step === 'init') {
+                    progressText.textContent = zh ? `开始扫描 ${event.detail || ''}...` : event.message;
+                    addScanLog('▶', event.message, 'log-info');
+                } else if (event.step === 'adapter_start') {
+                    const msg = zh
+                        ? `正在扫描 ${event.adapter}（${event.adapter_index}/${event.adapter_total}）...`
+                        : event.message;
+                    progressText.textContent = msg;
+                    addScanLog('◎', event.detail || event.message, 'log-wait');
+                } else if (event.step === 'layer_start') {
+                    addScanLog('→', event.message, 'log-wait');
+                } else if (event.step === 'layer_done') {
+                    addScanLog('✓', event.message, 'log-ok');
+                    if (event.detail) addScanLog(' ', `  Projects: ${event.detail}`, 'log-info');
+                } else if (event.step === 'layer_skip') {
+                    addScanLog('⊘', event.message, 'log-info');
+                } else if (event.step === 'layer_error') {
+                    addScanLog('✗', event.message, 'log-err');
+                } else if (event.step === 'adapter_done') {
+                    const msg = zh
+                        ? `${event.adapter}: 共 ${event.conversations_found} 条对话`
+                        : event.message;
+                    addScanLog('★', msg, 'log-ok');
+                } else if (event.step === 'adapter_error') {
+                    addScanLog('✗', `${event.adapter}: ${event.detail || 'error'}`, 'log-err');
+                } else if (event.step === 'checking_imported') {
+                    progressText.textContent = zh ? '正在检查已导入项目...' : event.message;
+                    addScanLog('◎', event.message, 'log-wait');
+                }
+            }
+
+            if (event.type === 'result') {
+                setScanPercent(100);
+                scanResults = event.projects || [];
+                selectedImportKeys.clear();
+
+                scanResults.forEach(p => {
+                    if (!p.already_imported) selectedImportKeys.add(p.key);
+                });
+
+                renderScanResults();
+
+                const newCount = scanResults.filter(p => !p.already_imported).length;
+                const totalCount = scanResults.length;
+                const elapsed = ((Date.now() - scanStartTime) / 1000).toFixed(1);
+
+                const msg = Tf('scanProjectsFound', totalCount) + ` (${newCount} new), ${elapsed}s`;
+                document.getElementById('scan-progress-text').textContent = msg;
+                addScanLog('★', msg, 'log-ok');
+
+                if (event.errors && event.errors.length > 0) {
+                    for (const err of event.errors) {
+                        addScanLog('⚠', err, 'log-err');
+                    }
+                }
+            }
+        }
+
+        function renderScanResults() {
+            const container = document.getElementById('scan-results');
+            if (scanResults.length === 0) {
+                container.classList.remove('has-results');
+                container.innerHTML = '<div style="padding:16px;color:var(--text-muted);font-size:12px;">No projects discovered.</div>';
+                container.classList.add('has-results');
+                updateImportButton();
+                return;
+            }
+
+            container.innerHTML = scanResults.map(p => {
+                const imported = p.already_imported;
+                const selected = selectedImportKeys.has(p.key);
+                const ideCls = IDE_TAG_CLASS[p.ide] || 'tag-cursor';
+                return `
+                    <div class="scan-result-item ${imported ? 'imported' : ''} ${selected ? 'selected' : ''}"
+                         data-key="${p.key}"
+                         onclick="${imported ? '' : `toggleImportItem('${p.key.replace(/'/g, "\\'")}')`}">
+                        <div class="scan-result-check">${imported ? '✓' : (selected ? '✓' : '')}</div>
+                        <div class="scan-result-info">
+                            <div class="scan-result-name">${escapeHtml(p.project_name)}</div>
+                            <div class="scan-result-meta">
+                                <span class="ide-tag ${ideCls}" translate="no">${IDE_FULL[p.ide] || p.ide}</span>
+                                ${p.project_path ? `<span>${escapeHtml(p.project_path)}</span>` : ''}
+                            </div>
+                            ${p.first_prompt_preview ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.first_prompt_preview)}</div>` : ''}
+                        </div>
+                        <div class="scan-result-count">${p.prompt_count} prompts</div>
+                        ${imported ? '<div class="scan-result-imported-badge">IMPORTED</div>' : ''}
+                    </div>
+                `;
+            }).join('');
+
+            container.classList.add('has-results');
+            updateImportButton();
+        }
+
+        function toggleImportItem(key) {
+            if (selectedImportKeys.has(key)) {
+                selectedImportKeys.delete(key);
+            } else {
+                selectedImportKeys.add(key);
+            }
+            renderScanResults();
+        }
+
+        function updateImportButton() {
+            const btn = document.getElementById('btn-import');
+            const info = document.getElementById('scan-footer-info');
+            const count = selectedImportKeys.size;
+            btn.disabled = count === 0;
+            info.textContent = Tf('scanProjectsSelected', count);
+        }
+
+        async function importSelected() {
+            const btn = document.getElementById('btn-import');
+            const info = document.getElementById('scan-footer-info');
+            btn.disabled = true;
+            info.textContent = T('scanImporting');
+            addScanLog('▶', T('scanImportStart'), 'log-info');
+
+            const projectsToImport = scanResults
+                .filter(p => selectedImportKeys.has(p.key) && !p.already_imported)
+                .map(p => ({ ide: p.ide, project_name: p.project_name }));
+
+            try {
+                const res = await fetch('/api/scan/import', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projects: projectsToImport }),
+                });
+                const data = await res.json();
+                const msg = Tf('scanImportedCount', data.imported);
+                info.textContent = msg;
+                addScanLog('✓', msg, 'log-ok');
+
+                if (data.errors && data.errors.length > 0) {
+                    for (const err of data.errors) {
+                        addScanLog('⚠', err, 'log-err');
+                    }
+                }
+
+                scanResults.forEach(p => {
+                    if (selectedImportKeys.has(p.key)) {
+                        p.already_imported = true;
+                    }
+                });
+                selectedImportKeys.clear();
+                renderScanResults();
+
+                await fetchData();
+            } catch (e) {
+                const msg = T('scanImportFail');
+                info.textContent = msg;
+                addScanLog('✗', `${msg}: ${e.message}`, 'log-err');
+                btn.disabled = false;
+            }
+        }
+
+        function cleanPrompt(text) {
+            if (!text) return '';
+            return text
+                .replace(/<\/?user_query>\s*/g, '')
+                .replace(/<\/?system_reminder>[\s\S]*?<\/system_reminder>/g, '')
+                .replace(/<[^>]{1,30}>/g, '')
+                .trim();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function stripHtml(html) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || '';
+        }
+    </script>
+</body>
+</html>

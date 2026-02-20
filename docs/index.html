@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenBBox | 脉络 — The DNA of AI Development</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=Fira+Code:wght@400&display=swap');
+
+        :root {
+            --bg: #000;
+            --accent: #00f2ff;
+            --accent-glow: rgba(0, 242, 255, 0.12);
+            --accent-purple: #a855f7;
+            --accent-green: #22c55e;
+            --border: #1a1a1a;
+            --card: rgba(255, 255, 255, 0.02);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg);
+            color: #fff;
+            font-family: 'Space Grotesk', 'Noto Sans SC', system-ui, sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* ── Navigation ── */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 100;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 72px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-logo {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: #fff; }
+
+        .nav-lang-btn {
+            padding: 6px 14px;
+            border: 1px solid #333;
+            border-radius: 20px;
+            background: transparent;
+            color: #888;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-lang-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .nav-github {
+            padding: 8px 20px;
+            background: #fff;
+            color: #000;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-github:hover { background: var(--accent); }
+
+        /* ── Hero ── */
+        .hero {
+            padding: 180px 32px 100px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 242, 255, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 32px;
+        }
+
+        .hero h1 {
+            font-size: clamp(40px, 7vw, 80px);
+            font-weight: 700;
+            letter-spacing: -2px;
+            line-height: 1.1;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 .highlight { color: var(--accent); }
+
+        .hero p {
+            font-size: 18px;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            padding: 14px 32px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0, 242, 255, 0.2); }
+
+        .btn-secondary {
+            padding: 14px 32px;
+            background: transparent;
+            color: #fff;
+            border: 1px solid #333;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover { border-color: #666; background: rgba(255, 255, 255, 0.03); }
+
+        /* ── IDE Scroll Bar ── */
+        .ide-bar {
+            padding: 40px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .ide-bar-label {
+            text-align: center;
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #333;
+            margin-bottom: 24px;
+        }
+
+        .ide-scroll {
+            display: flex;
+            gap: 64px;
+            animation: scrollIDE 30s linear infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes scrollIDE {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .ide-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            opacity: 0.3;
+            transition: opacity 0.3s;
+            flex-shrink: 0;
+        }
+
+        .ide-item:hover { opacity: 1; }
+
+        .ide-item svg {
+            width: 22px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        .ide-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        /* ── Core Values ── */
+        .values {
+            padding: 120px 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header h2 {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+
+        .section-header p {
+            color: #555;
+            font-size: 16px;
+        }
+
+        .values-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .value-card {
+            padding: 40px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.4s ease;
+        }
+
+        .value-card:hover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+            transform: translateY(-4px);
+        }
+
+        .value-num {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            font-family: 'Fira Code', monospace;
+            margin-bottom: 20px;
+        }
+
+        .value-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .value-card p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.7;
+        }
+
+        /* ── How It Works ── */
+        .how-it-works {
+            padding: 120px 32px;
+            background: rgba(255, 255, 255, 0.01);
+            border-top: 1px solid var(--border);
+        }
+
+        .how-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .how-steps { display: flex; flex-direction: column; gap: 32px; }
+
+        .how-step {
+            display: flex;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .how-step-num {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--accent-glow);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .how-step h4 { font-size: 16px; margin-bottom: 4px; }
+        .how-step p { font-size: 13px; color: #666; line-height: 1.6; }
+
+        .how-preview {
+            background: #0a0a0a;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 242, 255, 0.05);
+        }
+
+        .preview-bar {
+            padding: 12px 16px;
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .preview-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .preview-body {
+            display: grid;
+            grid-template-columns: 60px 1fr 1fr;
+            min-height: 300px;
+        }
+
+        .preview-col1 {
+            background: #000;
+            border-right: 1px solid var(--border);
+            padding: 16px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .preview-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: #111;
+            border: 1px solid #222;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: #555;
+        }
+
+        .preview-icon.active { border-color: var(--accent); color: var(--accent); }
+
+        .preview-col2 {
+            border-right: 1px solid var(--border);
+            padding: 16px;
+        }
+
+        .preview-prompt {
+            padding: 10px;
+            border-left: 3px solid transparent;
+            margin-bottom: 8px;
+            font-size: 11px;
+            color: #555;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .preview-prompt.active {
+            border-left-color: var(--accent);
+            color: #ddd;
+            background: rgba(0, 242, 255, 0.03);
+        }
+
+        .preview-col3 {
+            padding: 16px;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            color: #22c55e;
+            line-height: 1.8;
+        }
+
+        /* ── Showcase / Case Study ── */
+        .showcase {
+            padding: 120px 32px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .showcase-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .showcase-card {
+            padding: 32px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            transition: all 0.3s;
+        }
+
+        .showcase-card:hover { border-color: #333; }
+
+        .showcase-card .tag {
+            display: inline-block;
+            font-size: 10px;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tag-cursor { background: rgba(0, 242, 255, 0.1); color: var(--accent); }
+        .tag-trae { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .tag-claude { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+        .tag-vscode { background: rgba(168, 85, 247, 0.1); color: var(--accent-purple); }
+
+        .showcase-card h4 { font-size: 18px; margin-bottom: 8px; }
+        .showcase-card p { font-size: 13px; color: #555; line-height: 1.6; }
+
+        .showcase-card .stats {
+            margin-top: 16px;
+            display: flex;
+            gap: 24px;
+            font-size: 12px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .showcase-card .stats span { color: #444; }
+        .showcase-card .stats strong { color: var(--accent); }
+
+        /* ── Privacy ── */
+        .privacy {
+            padding: 80px 32px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.01);
+        }
+
+        .privacy-inner {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .privacy h3 { font-size: 24px; margin-bottom: 12px; }
+        .privacy p { color: #555; font-size: 14px; line-height: 1.7; }
+
+        .privacy-badges {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .privacy-badge {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #555;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* ── CTA ── */
+        .cta {
+            padding: 120px 32px;
+            text-align: center;
+        }
+
+        .cta h2 {
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+
+        .cta p { color: #555; font-size: 16px; margin-bottom: 32px; }
+
+        .cta-install {
+            display: inline-block;
+            padding: 16px 32px;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 10px;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            color: var(--accent);
+            margin-bottom: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .cta-install:hover { border-color: var(--accent); background: var(--accent-glow); }
+
+        /* ── Footer ── */
+        footer {
+            padding: 40px 32px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-size: 18px;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+            margin-bottom: 8px;
+        }
+
+        footer p { color: #333; font-size: 12px; }
+
+        /* ── Responsive ── */
+        @media (max-width: 768px) {
+            .how-inner { grid-template-columns: 1fr; }
+            .showcase-grid { grid-template-columns: 1fr; }
+            .preview-body { grid-template-columns: 1fr; }
+            .preview-col1, .preview-col2 { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-inner">
+            <div class="nav-logo" id="nav-logo">OpenBBox</div>
+            <div class="nav-links">
+                <a href="#features" id="nav-feat">Features</a>
+                <a href="#how" id="nav-how">How It Works</a>
+                <a href="#showcase" id="nav-case">Showcase</a>
+                <button class="nav-lang-btn" onclick="toggleLang()" id="nav-lang">中文</button>
+                <a href="https://github.com/openbbox/openbbox" class="nav-github" id="nav-gh">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-badge" id="hero-badge">Open Source AI Development Recorder</div>
+        <h1 id="hero-title">Open the <span class="highlight">Black Box</span><br>of AI Coding.</h1>
+        <p id="hero-desc">Your prompts shouldn't vanish in thin air. OpenBBox traces every command and code change across all major AI IDEs, turning your development history into a reusable asset.</p>
+        <div class="hero-buttons">
+            <a href="#install" class="btn-primary" id="hero-btn1">Get Started</a>
+            <a href="#how" class="btn-secondary" id="hero-btn2">See How It Works</a>
+        </div>
+    </section>
+
+    <section class="ide-bar">
+        <div class="ide-bar-label" id="ide-label">Supported Ecosystems</div>
+        <div class="ide-scroll" id="ide-scroll-track"></div>
+        <script>
+        (function() {
+            const ides = [
+                { name: 'Cursor', svg: '<svg viewBox="0 0 24 24" fill="#e0e0e0"><path d="M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z"/></svg>' },
+                { name: 'VS Code', svg: '<svg viewBox="0 0 24 24" fill="#007ACC"><path d="M17.583 0L9.04 7.647 3.788 3.574.5 4.97v14.06l3.288 1.396 5.252-4.074L17.583 24 23.5 21.42V2.58L17.583 0zM17.5 17.77l-5.458-4.226V10.46L17.5 6.23v11.54zM6.396 12.002l-2.857-2.18v4.36l2.857-2.18z"/></svg>' },
+                { name: 'Trae', svg: '<svg viewBox="0 0 24 24" fill="#4ADE80"><path d="M24 20.541H3.428v-3.426H0V3.4h24V20.54zM3.428 17.115h17.144V6.827H3.428v10.288zm8.573-5.196l-2.425 2.424-2.424-2.424 2.424-2.424 2.425 2.424zm6.857-.001l-2.424 2.423-2.425-2.423 2.425-2.425 2.424 2.425z"/></svg>' },
+                { name: 'Claude Code', svg: '<svg viewBox="0 0 24 24" fill="#D97757"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>' },
+                { name: 'Windsurf', svg: '<svg viewBox="0 0 24 24" fill="#00BCD4"><path clip-rule="evenodd" d="M23.78 5.004h-.228a2.187 2.187 0 00-2.18 2.196v4.912c0 .98-.804 1.775-1.76 1.775a1.818 1.818 0 01-1.472-.773L13.168 5.95a2.197 2.197 0 00-1.81-.95c-1.134 0-2.154.972-2.154 2.173v4.94c0 .98-.797 1.775-1.76 1.775-.57 0-1.136-.289-1.472-.773L.408 5.098C.282 4.918 0 5.007 0 5.228v4.284c0 .216.066.426.188.604l5.475 7.889c.324.466.8.812 1.351.938 1.377.316 2.645-.754 2.645-2.117V11.89c0-.98.787-1.775 1.76-1.775h.002c.586 0 1.135.288 1.472.773l4.972 7.163a2.15 2.15 0 001.81.95c1.158 0 2.151-.973 2.151-2.173v-4.939c0-.98.787-1.775 1.76-1.775h.194c.122 0 .22-.1.22-.222V5.225a.221.221 0 00-.22-.222z" fill-rule="evenodd"/></svg>' },
+                { name: 'Codex', svg: '<svg viewBox="0 0 24 24" fill="#10A37F"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>' },
+                { name: 'Cline / Roo Code', svg: '<svg viewBox="0 0 24 24" fill="#ef4444"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="#ef4444" stroke-width="2"/><path d="M8 12h8M12 8v8" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/></svg>' },
+            ];
+            const track = document.getElementById('ide-scroll-track');
+            const items = ides.concat(ides);
+            track.innerHTML = items.map(i => `<div class="ide-item">${i.svg}${i.name}</div>`).join('');
+        })();
+        </script>
+    </section>
+
+    <section class="values" id="features">
+        <div class="section-header">
+            <h2 id="val-title">Core Values</h2>
+            <p id="val-sub">Designed for the era of AI-directed development.</p>
+        </div>
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="value-num">01</div>
+                <h3 id="v1t">Intent Preservation</h3>
+                <p id="v1d">Every prompt is captured as a "Genetic Code". Never lose the creative thinking behind your complex code structures. Your instructions are your most valuable asset.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-num">02</div>
+                <h3 id="v2t">Evolution Mapping</h3>
+                <p id="v2d">Visualize how your project grows. Link every single prompt to its specific code diff and AI reasoning. See the causal chain from intent to implementation.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-num">03</div>
+                <h3 id="v3t">Asset Replication</h3>
+                <p id="v3d">Extract your high-quality prompt sequences. Export as Markdown scripts or JSON blueprints. Replicate successful architectures in new projects with a single click.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-num">04</div>
+                <h3 id="v4t">Multi-Source Sync</h3>
+                <p id="v4d">From Cursor to Claude Code CLI. OpenBBox unifies all your AI interactions into one single source of truth. Switch IDEs freely — your history follows you.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-num">05</div>
+                <h3 id="v5t">Privacy First</h3>
+                <p id="v5d">All data stays on your local machine. OpenBBox never uploads your code or prompts to any server. Your intellectual property remains yours.</p>
+            </div>
+            <div class="value-card">
+                <div class="value-num">06</div>
+                <h3 id="v6t">Director's Script</h3>
+                <p id="v6d">Generate a clean, ordered "Director's Script" — your complete prompt sequence stripped of AI noise. Copy it, share it, or replay it in a new project.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works" id="how">
+        <div class="how-inner">
+            <div>
+                <div class="section-header" style="text-align: left;">
+                    <h2 id="how-title">How It Works</h2>
+                    <p id="how-sub">Three steps. Zero configuration.</p>
+                </div>
+                <div class="how-steps">
+                    <div class="how-step">
+                        <div class="how-step-num">1</div>
+                        <div>
+                            <h4 id="s1t">Silent Capture</h4>
+                            <p id="s1d">OpenBBox runs as a background service, automatically detecting and reading conversation logs from your AI IDEs (Cursor, Trae, Claude Code, etc.).</p>
+                        </div>
+                    </div>
+                    <div class="how-step">
+                        <div class="how-step-num">2</div>
+                        <div>
+                            <h4 id="s2t">Temporal Alignment</h4>
+                            <p id="s2d">The matching engine links each prompt to the code changes that happened within 60 seconds, building the causal chain automatically.</p>
+                        </div>
+                    </div>
+                    <div class="how-step">
+                        <div class="how-step-num">3</div>
+                        <div>
+                            <h4 id="s3t">Visual Pipeline</h4>
+                            <p id="s3d">Open the three-column workspace. Left: your projects. Center: your prompt DNA. Right: AI responses and code diffs. Scroll-linked and copy-ready.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="how-preview">
+                <div class="preview-bar">
+                    <div class="preview-dot" style="background: #ef4444;"></div>
+                    <div class="preview-dot" style="background: #eab308;"></div>
+                    <div class="preview-dot" style="background: #22c55e;"></div>
+                </div>
+                <div class="preview-body">
+                    <div class="preview-col1">
+                        <div class="preview-icon active" style="padding:4px;"><svg viewBox="0 0 24 24" fill="var(--accent)" width="16" height="16"><path d="M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z"/></svg></div>
+                        <div class="preview-icon" style="padding:4px;"><svg viewBox="0 0 24 24" fill="#555" width="16" height="16"><path d="M24 20.541H3.428v-3.426H0V3.4h24V20.54zM3.428 17.115h17.144V6.827H3.428v10.288zm8.573-5.196l-2.425 2.424-2.424-2.424 2.424-2.424 2.425 2.424zm6.857-.001l-2.424 2.423-2.425-2.423 2.425-2.425 2.424 2.425z"/></svg></div>
+                        <div class="preview-icon" style="padding:4px;"><svg viewBox="0 0 24 24" fill="#555" width="16" height="16"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg></div>
+                    </div>
+                    <div class="preview-col2">
+                        <div class="preview-prompt active">#001 Initialize FastAPI + Redis</div>
+                        <div class="preview-prompt">#002 Add model rotation logic</div>
+                        <div class="preview-prompt">#003 Refactor to async</div>
+                        <div class="preview-prompt">#004 Add structured logging</div>
+                    </div>
+                    <div class="preview-col3">
+                        <span style="color: #22c55e;">+ from fastapi import FastAPI</span><br>
+                        <span style="color: #22c55e;">+ import aioredis</span><br>
+                        <br>
+                        <span style="color: #22c55e;">+ app = FastAPI()</span><br>
+                        <span style="color: #22c55e;">+ redis = aioredis.from_url(...)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="showcase" id="showcase">
+        <div class="section-header">
+            <h2 id="case-title">Real-World Use Cases</h2>
+            <p id="case-sub">See how developers use OpenBBox to preserve their AI-driven workflows.</p>
+        </div>
+        <div class="showcase-grid">
+            <div class="showcase-card">
+                <div class="tag tag-cursor">Cursor</div>
+                <h4 id="c1t">Full-Stack SaaS in 3 Hours</h4>
+                <p id="c1d">A developer used 47 prompts in Cursor to build a complete SaaS backend. OpenBBox captured the entire sequence, enabling them to replicate the architecture for a second product in 30 minutes.</p>
+                <div class="stats"><span>Prompts: <strong>47</strong></span><span>Files: <strong>23</strong></span><span>Time: <strong>3h</strong></span></div>
+            </div>
+            <div class="showcase-card">
+                <div class="tag tag-claude">Claude Code</div>
+                <h4 id="c2t">CLI-to-Visual Retrospective</h4>
+                <p id="c2d">Claude Code runs in the terminal with no visual history. OpenBBox transformed 120+ CLI interactions into a visual timeline, revealing an architectural drift that was caught and corrected.</p>
+                <div class="stats"><span>Prompts: <strong>124</strong></span><span>Files: <strong>56</strong></span><span>Drift: <strong>Caught</strong></span></div>
+            </div>
+            <div class="showcase-card">
+                <div class="tag tag-trae">Trae</div>
+                <h4 id="c3t">Cross-IDE Migration</h4>
+                <p id="c3d">A team started in Trae, then switched to Cursor mid-project. OpenBBox maintained a unified timeline across both IDEs, preserving the complete decision history.</p>
+                <div class="stats"><span>IDEs: <strong>2</strong></span><span>Prompts: <strong>89</strong></span><span>Continuity: <strong>100%</strong></span></div>
+            </div>
+            <div class="showcase-card">
+                <div class="tag tag-vscode">VS Code + Cline</div>
+                <h4 id="c4t">Team Knowledge Sharing</h4>
+                <p id="c4d">A senior developer exported their "Director's Script" for a microservice architecture. Junior developers imported it and replicated the same quality in their own projects.</p>
+                <div class="stats"><span>Exported: <strong>1 script</strong></span><span>Reused: <strong>5 projects</strong></span></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="privacy">
+        <div class="privacy-inner">
+            <h3 id="priv-title">Privacy is Non-Negotiable</h3>
+            <p id="priv-desc">OpenBBox is 100% local. Your code, your prompts, your intellectual property — nothing ever leaves your machine. All data is stored in a local SQLite database under your control.</p>
+            <div class="privacy-badges">
+                <div class="privacy-badge">LOCAL ONLY</div>
+                <div class="privacy-badge">MIT LICENSE</div>
+                <div class="privacy-badge">ZERO TELEMETRY</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta" id="install">
+        <h2 id="cta-title">Start Recording Your AI DNA</h2>
+        <p id="cta-desc">30 seconds to install. Zero configuration needed.</p>
+        <div class="cta-install" onclick="copyInstall()">
+            <span id="install-cmd">pip install -r requirements.txt && python -m cli.main start</span>
+        </div>
+        <br>
+        <div class="hero-buttons" style="margin-top: 16px;">
+            <a href="https://github.com/openbbox/openbbox" class="btn-primary" id="cta-btn1">Star on GitHub</a>
+            <a href="/" class="btn-secondary" id="cta-btn2">Open Dashboard</a>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo" id="footer-logo">OpenBBox</div>
+        <p id="footer-copy">&copy; 2026 OpenBBox Project. MIT Licensed. Your data stays local.</p>
+    </footer>
+
+    <script>
+        let lang = localStorage.getItem('openbbox_lang') || 'en';
+
+        const t = {
+            en: {
+                logo: 'OpenBBox', navFeat: 'Features', navHow: 'How It Works', navCase: 'Showcase', navLang: '中文', navGh: 'GitHub',
+                heroBadge: 'Open Source AI Development Recorder',
+                heroTitle: 'Open the <span class="highlight">Black Box</span><br>of AI Coding.',
+                heroDesc: 'Your prompts shouldn\'t vanish in thin air. OpenBBox traces every command and code change across all major AI IDEs, turning your development history into a reusable asset.',
+                heroBtn1: 'Get Started', heroBtn2: 'See How It Works',
+                ideLabel: 'Supported Ecosystems',
+                valTitle: 'Core Values', valSub: 'Designed for the era of AI-directed development.',
+                v1t: 'Intent Preservation', v1d: 'Every prompt is captured as a "Genetic Code". Never lose the creative thinking behind your complex code structures.',
+                v2t: 'Evolution Mapping', v2d: 'Visualize how your project grows. Link every prompt to its code diff and AI reasoning.',
+                v3t: 'Asset Replication', v3d: 'Extract prompt sequences. Export as Markdown or JSON. Replicate architectures with one click.',
+                v4t: 'Multi-Source Sync', v4d: 'Cursor, Trae, Claude Code, VS Code — all unified into one source of truth.',
+                v5t: 'Privacy First', v5d: 'All data stays local. OpenBBox never uploads your code or prompts to any server.',
+                v6t: "Director's Script", v6d: 'Generate a clean prompt sequence stripped of AI noise. Copy it, share it, replay it.',
+                howTitle: 'How It Works', howSub: 'Three steps. Zero configuration.',
+                s1t: 'Silent Capture', s1d: 'OpenBBox runs in the background, auto-detecting conversation logs from your AI IDEs.',
+                s2t: 'Temporal Alignment', s2d: 'The matching engine links prompts to code changes within a 60-second window.',
+                s3t: 'Visual Pipeline', s3d: 'Three-column workspace: projects, prompt DNA, and AI responses. Scroll-linked and copy-ready.',
+                caseTitle: 'Real-World Use Cases', caseSub: 'See how developers use OpenBBox.',
+                c1t: 'Full-Stack SaaS in 3 Hours', c1d: '47 prompts in Cursor built a complete SaaS backend. Replicated in 30 minutes.',
+                c2t: 'CLI-to-Visual Retrospective', c2d: '120+ Claude Code CLI interactions visualized. Architectural drift caught and corrected.',
+                c3t: 'Cross-IDE Migration', c3d: 'Trae to Cursor mid-project. Unified timeline preserved complete decision history.',
+                c4t: 'Team Knowledge Sharing', c4d: 'Senior dev exported a Director\'s Script. 5 junior projects replicated the same quality.',
+                privTitle: 'Privacy is Non-Negotiable', privDesc: '100% local. Your code, prompts, and IP never leave your machine.',
+                privBadge1: 'LOCAL ONLY', privBadge2: 'MIT LICENSE', privBadge3: 'ZERO TELEMETRY',
+                ctaTitle: 'Start Recording Your AI DNA', ctaDesc: '30 seconds to install. Zero configuration.',
+                ctaBtn1: 'Star on GitHub', ctaBtn2: 'Open Dashboard',
+                footerLogo: 'OpenBBox', footerCopy: '© 2026 OpenBBox Project. MIT Licensed. Your data stays local.',
+                // Preview prompts
+                pp1: '#001 Initialize FastAPI + Redis', pp2: '#002 Add model rotation logic',
+                pp3: '#003 Refactor to async', pp4: '#004 Add structured logging',
+                // Showcase stats
+                st1: 'Prompts', st2: 'Files', st3: 'Time', st4: 'Drift', st5: 'Caught',
+                st6: 'IDEs', st7: 'Continuity', st8: 'Exported', st9: 'Reused',
+                copied: 'Copied!',
+            },
+            zh: {
+                logo: '脉络', navFeat: '核心功能', navHow: '工作原理', navCase: '案例展示', navLang: 'English', navGh: 'GitHub',
+                heroBadge: '开源 AI 开发记录引擎',
+                heroTitle: '打开 AI 编程的<br><span class="highlight">黑匣子</span>',
+                heroDesc: '提示词不应随风而逝。脉络自动追踪所有主流 AI 编辑器中的指令与代码变更，将你的开发历史转化为可复用的资产。',
+                heroBtn1: '立即开始', heroBtn2: '了解工作原理',
+                ideLabel: '支持的生态系统',
+                valTitle: '核心价值', valSub: '为 AI 指挥官时代而生。',
+                v1t: '意图沉淀', v1d: '捕获每一条提示词作为"基因片段"。保留复杂架构背后的指挥思路，永不丢失。',
+                v2t: '演进具像化', v2d: '可视化项目成长轨迹。自动将每一条指令与对应的代码 Diff 和 AI 推理对齐。',
+                v3t: '资产化复刻', v3d: '提炼高质量指令序列。导出为 Markdown 或 JSON 蓝图。一键在新项目中复现成功架构。',
+                v4t: '多源同步', v4d: '整合 Cursor、Trae、Claude Code、VS Code 等多端数据至统一面板。',
+                v5t: '隐私至上', v5d: '所有数据存储在本地。脉络永远不会将你的代码或提示词上传到任何服务器。',
+                v6t: '导演剧本', v6d: '生成纯净的指令序列，去除 AI 的冗余回复。可复制、可分享、可在新项目中重放。',
+                howTitle: '工作原理', howSub: '三步完成，零配置。',
+                s1t: '静默捕获', s1d: '脉络作为后台服务运行，自动检测并读取 AI 编辑器的本地对话日志。',
+                s2t: '时空对齐', s2d: '匹配引擎将每条指令与 60 秒窗口内的代码变更关联，自动建立因果链。',
+                s3t: '可视化流水线', s3d: '三列工作空间：项目源、提示词 DNA、AI 响应。滚动联动，一键复制。',
+                caseTitle: '真实案例', caseSub: '看看开发者如何使用脉络保存 AI 开发工作流。',
+                c1t: '3 小时构建全栈 SaaS', c1d: '在 Cursor 中用 47 条指令构建完整 SaaS 后端。通过脉络导出剧本，30 分钟复刻到第二个产品。',
+                c2t: 'CLI 到可视化复盘', c2d: '120+ 条 Claude Code 终端交互被可视化。发现并修正了架构偏移。',
+                c3t: '跨 IDE 无缝迁移', c3d: '项目中途从 Trae 切换到 Cursor。脉络维护了统一的时间线，完整保留决策历史。',
+                c4t: '团队知识共享', c4d: '高级开发者导出"导演剧本"。5 个初级项目复刻了同等质量的架构。',
+                privTitle: '隐私不可妥协', privDesc: '100% 本地化。你的代码、提示词和知识产权永远不会离开你的设备。',
+                privBadge1: '仅限本地', privBadge2: 'MIT 协议', privBadge3: '零遥测',
+                ctaTitle: '开始记录你的 AI 基因', ctaDesc: '30 秒安装，零配置。',
+                ctaBtn1: '在 GitHub 加星', ctaBtn2: '打开工作台',
+                footerLogo: '脉络', footerCopy: '© 2026 脉络 (OpenBBox) 项目。MIT 协议。数据存储在本地。',
+                // Preview prompts
+                pp1: '#001 初始化 FastAPI + Redis', pp2: '#002 添加模型轮换逻辑',
+                pp3: '#003 重构为异步', pp4: '#004 添加结构化日志',
+                // Showcase stats
+                st1: '提示词', st2: '文件', st3: '耗时', st4: '偏移', st5: '已捕获',
+                st6: '编辑器', st7: '连续性', st8: '已导出', st9: '复用',
+                copied: '已复制！',
+            },
+        };
+
+        function applyLang() {
+            const c = t[lang];
+            const ids = {
+                'nav-logo': 'logo', 'nav-feat': 'navFeat', 'nav-how': 'navHow', 'nav-case': 'navCase',
+                'nav-lang': 'navLang', 'nav-gh': 'navGh',
+                'hero-badge': 'heroBadge', 'hero-desc': 'heroDesc', 'hero-btn1': 'heroBtn1', 'hero-btn2': 'heroBtn2',
+                'ide-label': 'ideLabel',
+                'val-title': 'valTitle', 'val-sub': 'valSub',
+                'v1t': 'v1t', 'v1d': 'v1d', 'v2t': 'v2t', 'v2d': 'v2d', 'v3t': 'v3t', 'v3d': 'v3d',
+                'v4t': 'v4t', 'v4d': 'v4d', 'v5t': 'v5t', 'v5d': 'v5d', 'v6t': 'v6t', 'v6d': 'v6d',
+                'how-title': 'howTitle', 'how-sub': 'howSub',
+                's1t': 's1t', 's1d': 's1d', 's2t': 's2t', 's2d': 's2d', 's3t': 's3t', 's3d': 's3d',
+                'case-title': 'caseTitle', 'case-sub': 'caseSub',
+                'c1t': 'c1t', 'c1d': 'c1d', 'c2t': 'c2t', 'c2d': 'c2d', 'c3t': 'c3t', 'c3d': 'c3d', 'c4t': 'c4t', 'c4d': 'c4d',
+                'priv-title': 'privTitle', 'priv-desc': 'privDesc',
+                'cta-title': 'ctaTitle', 'cta-desc': 'ctaDesc', 'cta-btn1': 'ctaBtn1', 'cta-btn2': 'ctaBtn2',
+                'footer-logo': 'footerLogo', 'footer-copy': 'footerCopy',
+            };
+            for (const [elId, key] of Object.entries(ids)) {
+                const el = document.getElementById(elId);
+                if (el) el.textContent = c[key];
+            }
+            document.getElementById('hero-title').innerHTML = c.heroTitle;
+            // Privacy badges
+            const badges = document.querySelectorAll('.privacy-badge');
+            if (badges[0]) badges[0].textContent = c.privBadge1;
+            if (badges[1]) badges[1].textContent = c.privBadge2;
+            if (badges[2]) badges[2].textContent = c.privBadge3;
+            // Preview prompts
+            const prompts = document.querySelectorAll('.preview-prompt');
+            if (prompts[0]) prompts[0].textContent = c.pp1;
+            if (prompts[1]) prompts[1].textContent = c.pp2;
+            if (prompts[2]) prompts[2].textContent = c.pp3;
+            if (prompts[3]) prompts[3].textContent = c.pp4;
+            // Page title
+            document.title = lang === 'zh'
+                ? '脉络 | OpenBBox — AI 开发的 DNA'
+                : 'OpenBBox | 脉络 — The DNA of AI Development';
+        }
+
+        function toggleLang() {
+            lang = lang === 'en' ? 'zh' : 'en';
+            localStorage.setItem('openbbox_lang', lang);
+            applyLang();
+        }
+
+        if (lang !== 'en') applyLang();
+
+        function copyInstall() {
+            const cmd = document.getElementById('install-cmd').textContent;
+            navigator.clipboard.writeText(cmd);
+            const el = document.getElementById('install-cmd');
+            const orig = el.textContent;
+            el.textContent = t[lang].copied;
+            setTimeout(() => { el.textContent = orig; }, 1500);
+        }
+    </script>
+</body>
+</html>

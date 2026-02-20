@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+*.whl
+
+# Virtual environments
+.env
+.venv/
+venv/
+env/
+
+# Local data (NEVER push personal data)
+*.db
+*.sqlite
+*.sqlite3
+.openbbox/
+data/
+
+# Personal notes / conversation history
+memo.md
+openbbox.md
+docs/cankao.md
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+
+# Node (if any)
+node_modules/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Logs
+*.log
+logs/
