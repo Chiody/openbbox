@@ -140,6 +140,54 @@ make status     # Show detected IDEs
 make help       # Show all commands
 ```
 
+### 🤖 AI-Assisted Setup (Recommended)
+
+Due to the wide variety of operating systems, Python versions, and environment configurations, you may encounter setup issues. **The fastest way to resolve them is to let your AI IDE or AI agent handle it.**
+
+Simply clone the repo, open it in your AI editor (Cursor, Kiro, VS Code with Copilot, Trae, etc.), and paste one of the following prompts:
+
+<details>
+<summary><strong>Suggested Prompts</strong></summary>
+
+**First-time setup:**
+
+```
+I just cloned the OpenBBox project. Please read the README, install all
+dependencies, resolve any environment issues (Python version, missing
+packages, etc.), and start the server so I can open http://localhost:9966
+```
+
+**If the server fails to start:**
+
+```
+The OpenBBox server failed to start. Here is the error: [paste error].
+Please diagnose the issue, fix it, and restart the server. The entry
+point is `PYTHONPATH=. python3 cli/main.py start` and it should run
+on port 9966.
+```
+
+**If IDE detection is not working:**
+
+```
+OpenBBox is running but it's not detecting my IDE conversations.
+I use [Cursor/VS Code/Kiro/Trae/etc.]. Please check the adapter
+configuration, verify the expected data paths exist on my system,
+and run a manual scan to debug.
+```
+
+**Full autopilot:**
+
+```
+Read the entire OpenBBox project structure. Set up the Python
+environment, install dependencies, start the server, open the
+dashboard, trigger a scan of all my local AI IDEs, and report
+what conversations were found.
+```
+
+</details>
+
+> 💡 **Why this works**: OpenBBox is a pure Python project with minimal dependencies. Any modern AI coding assistant can read the codebase, understand the architecture, and fix environment-specific issues in seconds — much faster than manual debugging.
+
 ---
 
 ## 📂 Project Structure

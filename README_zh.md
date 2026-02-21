@@ -140,6 +140,49 @@ make status     # 查看检测到的 IDE
 make help       # 显示所有命令
 ```
 
+### 🤖 AI 辅助安装（推荐）
+
+由于操作系统、Python 版本和环境配置千差万别，你可能会遇到安装问题。**最快的解决方式是让你的 AI 编辑器或 AI Agent 来处理。**
+
+只需克隆仓库，在你的 AI 编辑器（Cursor、Kiro、VS Code + Copilot、Trae 等）中打开项目，然后粘贴以下提示词：
+
+<details>
+<summary><strong>建议提示词</strong></summary>
+
+**首次安装：**
+
+```
+我刚克隆了 OpenBBox 项目。请阅读 README，安装所有依赖，解决环境问题
+（Python 版本、缺少的包等），然后启动服务让我能打开 http://localhost:9966
+```
+
+**服务启动失败：**
+
+```
+OpenBBox 服务启动失败，错误信息如下：[粘贴错误]。
+请诊断问题并修复，然后重启服务。入口是
+PYTHONPATH=. python3 cli/main.py start，端口 9966。
+```
+
+**IDE 检测不到：**
+
+```
+OpenBBox 已运行但检测不到我的 IDE 对话记录。
+我使用的是 [Cursor/VS Code/Kiro/Trae/等]。请检查适配器配置，
+确认我系统上的数据路径是否存在，并手动执行一次扫描来调试。
+```
+
+**全自动模式：**
+
+```
+阅读整个 OpenBBox 项目结构。搭建 Python 环境，安装依赖，启动服务，
+打开 Dashboard，触发一次全量 IDE 扫描，然后告诉我发现了哪些对话记录。
+```
+
+</details>
+
+> 💡 **为什么这样做有效**：OpenBBox 是一个纯 Python 项目，依赖极少。任何现代 AI 编程助手都能读懂代码库、理解架构，并在几秒内修复特定环境的问题 — 比手动调试快得多。
+
 ---
 
 ## 📂 项目结构
