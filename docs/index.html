@@ -784,6 +784,31 @@
         </div>
     </section>
 
+    <section style="padding: 80px 32px; border-top: 1px solid var(--border);">
+        <div style="max-width: 720px; margin: 0 auto; text-align: center;">
+            <h2 style="font-size: 28px; font-weight: 700; margin-bottom: 12px;" id="ai-setup-title">🤖 Let Your AI Set It Up</h2>
+            <p style="color: #666; font-size: 14px; line-height: 1.7; margin-bottom: 32px;" id="ai-setup-desc">Different OS, Python version, or environment? Don't debug manually. Just open the project in your AI IDE and paste a prompt — your AI assistant will handle the rest.</p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; text-align: left;">
+                <div style="padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
+                    <div style="font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 8px;" id="ai-p1-label">FIRST-TIME SETUP</div>
+                    <code style="font-size: 11px; color: #aaa; line-height: 1.6; display: block;" id="ai-p1">"Read the OpenBBox README, install dependencies, fix any issues, and start the server on port 9966."</code>
+                </div>
+                <div style="padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
+                    <div style="font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 8px;" id="ai-p2-label">IDE NOT DETECTED</div>
+                    <code style="font-size: 11px; color: #aaa; line-height: 1.6; display: block;" id="ai-p2">"OpenBBox can't find my IDE data. I use [Cursor/VS Code/Kiro]. Check adapter paths and debug."</code>
+                </div>
+                <div style="padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
+                    <div style="font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 8px;" id="ai-p3-label">STARTUP FAILURE</div>
+                    <code style="font-size: 11px; color: #aaa; line-height: 1.6; display: block;" id="ai-p3">"OpenBBox server failed with: [paste error]. Diagnose and fix it."</code>
+                </div>
+                <div style="padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 12px;">
+                    <div style="font-size: 11px; font-weight: 600; color: var(--accent); margin-bottom: 8px;" id="ai-p4-label">FULL AUTOPILOT</div>
+                    <code style="font-size: 11px; color: #aaa; line-height: 1.6; display: block;" id="ai-p4">"Set up OpenBBox end-to-end: environment, dependencies, server, scan all IDEs, report results."</code>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section class="cta" id="install">
         <h2 id="cta-title">Start Recording Your AI DNA</h2>
         <p id="cta-desc">30 seconds to install. Zero configuration needed.</p>
@@ -836,6 +861,12 @@
                 c6t: 'Team Knowledge Sharing', c6d: 'Senior dev exported a Director\'s Script. 5 junior projects replicated the same quality.',
                 privTitle: 'Privacy is Non-Negotiable', privDesc: '100% local. Your code, prompts, and IP never leave your machine.',
                 privBadge1: 'LOCAL ONLY', privBadge2: 'MIT LICENSE', privBadge3: 'ZERO TELEMETRY',
+                aiSetupTitle: '🤖 Let Your AI Set It Up',
+                aiSetupDesc: "Different OS, Python version, or environment? Don't debug manually. Just open the project in your AI IDE and paste a prompt.",
+                aiP1Label: 'FIRST-TIME SETUP', aiP1: '"Read the OpenBBox README, install dependencies, fix any issues, and start the server on port 9966."',
+                aiP2Label: 'IDE NOT DETECTED', aiP2: '"OpenBBox can\'t find my IDE data. I use [Cursor/VS Code/Kiro]. Check adapter paths and debug."',
+                aiP3Label: 'STARTUP FAILURE', aiP3: '"OpenBBox server failed with: [paste error]. Diagnose and fix it."',
+                aiP4Label: 'FULL AUTOPILOT', aiP4: '"Set up OpenBBox end-to-end: environment, dependencies, server, scan all IDEs, report results."',
                 ctaTitle: 'Start Recording Your AI DNA', ctaDesc: '30 seconds to install. Zero configuration.',
                 ctaBtn1: 'Star on GitHub', ctaBtn2: 'Open Dashboard',
                 footerLogo: 'OpenBBox', footerCopy: '© 2026 OpenBBox Project. MIT Licensed. Your data stays local.',
@@ -877,6 +908,12 @@
                 c6t: '团队知识共享', c6d: '高级开发者导出"导演剧本"。5 个初级项目复刻了同等质量的架构。',
                 privTitle: '隐私不可妥协', privDesc: '100% 本地化。你的代码、提示词和知识产权永远不会离开你的设备。',
                 privBadge1: '仅限本地', privBadge2: 'MIT 协议', privBadge3: '零遥测',
+                aiSetupTitle: '🤖 让 AI 帮你搞定',
+                aiSetupDesc: '不同系统、Python 版本或环境？别手动调试了。在 AI 编辑器里打开项目，粘贴一句提示词就行。',
+                aiP1Label: '首次安装', aiP1: '"阅读 OpenBBox README，安装依赖，解决问题，启动服务到 9966 端口。"',
+                aiP2Label: 'IDE 检测不到', aiP2: '"OpenBBox 找不到我的 IDE 数据。我用的是 [Cursor/VS Code/Kiro]。检查适配器路径并调试。"',
+                aiP3Label: '启动失败', aiP3: '"OpenBBox 服务报错：[粘贴错误]。诊断并修复。"',
+                aiP4Label: '全自动模式', aiP4: '"端到端搭建 OpenBBox：环境、依赖、服务、扫描所有 IDE、报告结果。"',
                 ctaTitle: '开始记录你的 AI 基因', ctaDesc: '30 秒安装，零配置。',
                 ctaBtn1: '在 GitHub 加星', ctaBtn2: '打开工作台',
                 footerLogo: '脉络', footerCopy: '© 2026 脉络 (OpenBBox) 项目。MIT 协议。数据存储在本地。',
@@ -907,6 +944,11 @@
                 'case-title': 'caseTitle', 'case-sub': 'caseSub',
                 'c1t': 'c1t', 'c1d': 'c1d', 'c2t': 'c2t', 'c2d': 'c2d', 'c3t': 'c3t', 'c3d': 'c3d', 'c4t': 'c4t', 'c4d': 'c4d', 'c5t': 'c5t', 'c5d': 'c5d', 'c6t': 'c6t', 'c6d': 'c6d',
                 'priv-title': 'privTitle', 'priv-desc': 'privDesc',
+                'ai-setup-title': 'aiSetupTitle', 'ai-setup-desc': 'aiSetupDesc',
+                'ai-p1-label': 'aiP1Label', 'ai-p1': 'aiP1',
+                'ai-p2-label': 'aiP2Label', 'ai-p2': 'aiP2',
+                'ai-p3-label': 'aiP3Label', 'ai-p3': 'aiP3',
+                'ai-p4-label': 'aiP4Label', 'ai-p4': 'aiP4',
                 'cta-title': 'ctaTitle', 'cta-desc': 'ctaDesc', 'cta-btn1': 'ctaBtn1', 'cta-btn2': 'ctaBtn2',
                 'footer-logo': 'footerLogo', 'footer-copy': 'footerCopy',
             };

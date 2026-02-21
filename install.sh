@@ -35,7 +35,14 @@ for cmd in python3 python; do
     fi
 done
 
-[ -z "$PYTHON" ] && fail "Python >= $MIN_PYTHON is required. Install from https://python.org"
+if [ -z "$PYTHON" ]; then
+    echo -e "${RED}[  ✗  ]${NC} Python >= $MIN_PYTHON is required."
+    echo ""
+    echo -e "${CYAN}💡 Tip: Open this project in your AI IDE and paste this prompt:${NC}"
+    echo -e "  ${BOLD}\"Install Python 3.9+ on my system, then run the OpenBBox install.sh script again.\"${NC}"
+    echo ""
+    exit 1
+fi
 ok "Found $PYTHON ($($PYTHON --version 2>&1))"
 
 # Check Git
@@ -97,4 +104,7 @@ echo ""
 echo -e "  Start:    ${BOLD}openbbox start${NC}"
 echo -e "  Update:   ${BOLD}cd $INSTALL_DIR && git pull && pip install -e .${NC}"
 echo -e "  Dashboard: ${BOLD}http://localhost:9966${NC}"
+echo ""
+echo -e "${CYAN}💡 Having issues? Open the project in your AI IDE and paste:${NC}"
+echo -e "  ${BOLD}\"Read the OpenBBox README, fix any setup issues, and start the server on port 9966.\"${NC}"
 echo ""

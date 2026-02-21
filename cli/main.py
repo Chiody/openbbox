@@ -58,8 +58,17 @@ def start(port: int, host: str, no_scan: bool):
     console.print(f"[dim]  Landing:   http://localhost:{port}/landing[/dim]")
     console.print(f"[dim]  API docs:  http://localhost:{port}/docs[/dim]")
 
-    import uvicorn
-    uvicorn.run("server.app:app", host=host, port=port, log_level="info")
+    try:
+        import uvicorn
+        uvicorn.run("server.app:app", host=host, port=port, log_level="info")
+    except Exception as e:
+        console.print(f"\n[red]Server failed to start: {e}[/red]")
+        console.print()
+        console.print("[cyan]💡 Paste this to your AI assistant to fix it:[/cyan]")
+        console.print(f'[dim]  "The OpenBBox server failed with: {e}')
+        console.print(f'   Entry point: PYTHONPATH=. python3 cli/main.py start --port {port}')
+        console.print('   Diagnose and fix the issue."[/dim]')
+        raise
 
 
 @cli.command()
@@ -76,6 +85,10 @@ def scan(since: str | None):
     adapters = get_available_adapters()
     if not adapters:
         console.print("[yellow]No AI IDEs detected on this machine.[/yellow]")
+        console.print()
+        console.print("[cyan]💡 Ask your AI assistant to help debug:[/cyan]")
+        console.print('[dim]  "OpenBBox detected no IDEs. I use [Cursor/VS Code/Kiro/Trae].')
+        console.print('   Check if the adapter paths exist on my system and run a manual scan."[/dim]')
         return
 
     storage = PulseStorage()

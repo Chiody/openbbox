@@ -2056,6 +2056,11 @@
             <div class="empty-state" id="empty-state">
                 <h2 id="empty-title">No Data Yet</h2>
                 <p id="empty-desc">Start coding with an AI IDE. OpenBBox will automatically capture your prompts and code changes.</p>
+                <div id="empty-ai-hint" style="margin-top:20px;padding:16px 24px;background:rgba(0,242,255,0.04);border:1px solid rgba(0,242,255,0.12);border-radius:10px;max-width:480px;text-align:left;">
+                    <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px;" id="empty-ai-title">💡 Quick Start with AI</div>
+                    <p style="font-size:11px;color:var(--text-dim);line-height:1.6;margin-bottom:10px;" id="empty-ai-desc">Having trouble? Paste this prompt into your AI IDE:</p>
+                    <code id="empty-ai-prompt" style="display:block;font-size:11px;color:#ccc;background:rgba(0,0,0,0.3);padding:10px 12px;border-radius:6px;cursor:pointer;line-height:1.5;word-break:break-word;" onclick="navigator.clipboard.writeText(this.textContent);this.style.borderColor='var(--accent)';setTimeout(()=>this.style.borderColor='transparent',1500)" title="Click to copy">"Read the OpenBBox project, install dependencies, start the server, trigger a full IDE scan, and report what was found."</code>
+                </div>
             </div>
         </div>
         <div class="display-content" id="memo-area" style="display:none;">
@@ -2171,6 +2176,9 @@
                 status: 'REAL-TIME TRACING',
                 emptyTitle: 'No Data Yet',
                 emptyDesc: 'Start coding with an AI IDE. OpenBBox will automatically capture your prompts and code changes.',
+                emptyAiTitle: '💡 Quick Start with AI',
+                emptyAiDesc: 'Having trouble? Paste this prompt into your AI IDE:',
+                emptyAiPrompt: '"Read the OpenBBox project, install dependencies, start the server, trigger a full IDE scan, and report what was found."',
                 directorNote: "DIRECTOR'S NOTE",
                 totalLabel: 'TOTAL',
                 sourceLabel: 'SOURCE',
@@ -2275,6 +2283,9 @@
                 status: '实时追踪中',
                 emptyTitle: '暂无数据',
                 emptyDesc: '使用 AI 编辑器开始编码，脉络会自动捕获你的提示词和代码变更。',
+                emptyAiTitle: '💡 用 AI 快速上手',
+                emptyAiDesc: '遇到问题？把下面的提示词粘贴到你的 AI 编辑器中：',
+                emptyAiPrompt: '"阅读 OpenBBox 项目，安装依赖，启动服务，触发全量 IDE 扫描，然后告诉我发现了什么。"',
                 directorNote: '导演笔记',
                 totalLabel: '总计',
                 sourceLabel: '来源',
@@ -3795,6 +3806,14 @@
             // Sidebar toggle tooltip
             const sidebarToggle = document.getElementById('sidebar-toggle');
             if (sidebarToggle) sidebarToggle.title = t.expandCollapse;
+
+            // Empty state AI hint
+            const eAiTitle = document.getElementById('empty-ai-title');
+            const eAiDesc = document.getElementById('empty-ai-desc');
+            const eAiPrompt = document.getElementById('empty-ai-prompt');
+            if (eAiTitle) eAiTitle.textContent = t.emptyAiTitle;
+            if (eAiDesc) eAiDesc.textContent = t.emptyAiDesc;
+            if (eAiPrompt) eAiPrompt.textContent = t.emptyAiPrompt;
 
             renderIdeSummary();
             renderPrompts();

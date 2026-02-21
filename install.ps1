@@ -33,7 +33,14 @@ foreach ($cmd in @("python", "python3", "py")) {
     } catch {}
 }
 
-if (-not $python) { Fail "Python >= 3.$MIN_PYTHON_MINOR is required. Install from https://python.org" }
+if (-not $python) {
+    Write-Host "[  ✗  ] Python >= 3.$MIN_PYTHON_MINOR is required." -ForegroundColor Red
+    Write-Host ""
+    Write-Host "💡 Tip: Open this project in your AI IDE and paste this prompt:" -ForegroundColor Cyan
+    Write-Host '  "Install Python 3.9+ on my Windows system, then run the OpenBBox install.ps1 script again."' -ForegroundColor White
+    Write-Host ""
+    exit 1
+}
 $pyver = & $python --version 2>&1
 Ok "Found $python ($pyver)"
 
@@ -97,4 +104,7 @@ Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "  Start:     openbbox start" -ForegroundColor White
 Write-Host "  Dashboard: http://localhost:9966" -ForegroundColor White
+Write-Host ""
+Write-Host "💡 Having issues? Open the project in your AI IDE and paste:" -ForegroundColor Cyan
+Write-Host '  "Read the OpenBBox README, fix any setup issues, and start the server on port 9966."' -ForegroundColor White
 Write-Host ""

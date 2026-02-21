@@ -16,6 +16,17 @@ source .venv/bin/activate
 make dev  # starts server with auto-reload at http://localhost:9966
 ```
 
+### 🤖 Or Let Your AI Handle It
+
+Open the cloned project in your AI IDE and paste one of these prompts:
+
+| Goal | Prompt |
+|------|--------|
+| **Setup dev environment** | `"Read the CONTRIBUTING.md, set up the dev environment, install all dependencies, and start the server in dev mode with auto-reload."` |
+| **Add a new IDE adapter** | `"I want to add an adapter for [IDE name]. Read CONTRIBUTING.md and the existing adapters (e.g. cursor_adapter.py), then create a new adapter following the same pattern. Register it and test detection."` |
+| **Fix a failing adapter** | `"The [IDE name] adapter is not detecting conversations. Read the adapter code, check if the expected data paths exist on my system, and debug the issue."` |
+| **Understand the codebase** | `"Read the OpenBBox project structure, explain how the adapter → matcher → storage pipeline works, and list the key files I should understand before contributing."` |
+
 ---
 
 ## Project Structure
