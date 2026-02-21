@@ -323,6 +323,7 @@
         .ide-vscode { color: var(--accent-blue); border-color: var(--accent-blue); }
         .ide-windsurf { color: var(--accent-purple); border-color: var(--accent-purple); }
         .ide-codex { color: var(--accent-green); border-color: var(--accent-green); }
+        .ide-kiro { color: #9046FF; border-color: #9046FF; }
 
         /* ── Column 2: Prompt DNA Stream ── */
         .col-prompts {
@@ -1131,6 +1132,7 @@
         .resp-subtitle .ide-pill.ide-trae { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
         .resp-subtitle .ide-pill.ide-claude { background: rgba(249,115,22,0.1); color: var(--accent-orange); }
         .resp-subtitle .ide-pill.ide-codex { background: rgba(34,197,94,0.1); color: var(--accent-green); }
+        .resp-subtitle .ide-pill.ide-kiro { background: rgba(144,70,255,0.1); color: #9046FF; }
         .resp-subtitle .ide-pill.ide-vscode { background: rgba(59,130,246,0.1); color: var(--accent-blue); }
 
         .resp-section-label {
@@ -1916,19 +1918,21 @@
         .ide-filter-bar {
             display: flex;
             flex-wrap: wrap;
-            gap: 4px;
-            padding: 0 4px;
+            gap: 3px;
+            padding: 0 6px;
             width: 100%;
             flex-shrink: 0;
+            justify-content: center;
         }
         .col-source.expanded .ide-filter-bar {
             padding: 0;
             gap: 6px;
+            justify-content: flex-start;
         }
         .ide-filter-chip {
             font-size: 9px;
             font-weight: 600;
-            padding: 3px 6px;
+            padding: 3px 5px;
             border-radius: 4px;
             border: 1px solid var(--border);
             background: transparent;
@@ -1947,9 +1951,31 @@
             background: var(--accent-glow);
             color: var(--accent);
         }
+        .ide-filter-chip .chip-count { display: none; }
         .col-source.expanded .ide-filter-chip {
             font-size: 10px;
             padding: 4px 8px;
+        }
+        .col-source.expanded .ide-filter-chip .chip-count {
+            display: inline-block;
+        }
+        .chip-count {
+            font-size: 9px;
+            font-weight: 700;
+            min-width: 16px;
+            height: 16px;
+            line-height: 16px;
+            text-align: center;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            color: var(--text-dim);
+            margin-left: 3px;
+            padding: 0 3px;
+            vertical-align: middle;
+        }
+        .ide-filter-chip.active .chip-count {
+            background: rgba(0,255,200,0.15);
+            color: var(--accent);
         }
     </style>
 </head>
@@ -2095,6 +2121,7 @@
             VSCode: 'ide-vscode',
             Windsurf: 'ide-windsurf',
             Codex: 'ide-codex',
+            Kiro: 'ide-kiro',
             Unknown: 'ide-cursor',
         };
 
@@ -2105,6 +2132,7 @@
             VSCode: 'VS',
             Windsurf: 'W',
             Codex: 'CX',
+            Kiro: 'K',
             Unknown: '?',
         };
 
@@ -2116,6 +2144,7 @@
             VSCode: 'VS Code',
             Windsurf: 'Windsurf',
             Codex: 'Codex',
+            Kiro: 'Kiro',
             Cline: 'Cline',
             Unknown: 'Unknown',
         };
@@ -2127,6 +2156,7 @@
             VSCode: 'tag-vscode',
             Windsurf: 'tag-cursor',
             Codex: 'tag-cursor',
+            Kiro: 'tag-trae',
         };
 
         let sidebarExpanded = false;
@@ -2444,9 +2474,7 @@
             for (const p of projects) {
                 const name = p.project_name;
                 if (activeIdeFilter && !(p.source_ides || []).includes(activeIdeFilter)) continue;
-                if (countByProject[name]) {
-                    projMap.set(name, { ...p, total_prompts: countByProject[name] });
-                }
+                projMap.set(name, { ...p, total_prompts: countByProject[name] || p.total_prompts || 0 });
             }
             for (const name of Object.keys(countByProject)) {
                 if (!projMap.has(name)) {
@@ -2531,22 +2559,30 @@
 
         function renderIdeFilterBar() {
             const bar = document.getElementById('ide-filter-bar');
-            const ideSet = new Set();
-            for (const n of nodes) {
-                const ide = n.source?.ide || 'Unknown';
-                if (ide !== 'Unknown') ideSet.add(ide);
+            const ideMap = {};
+            for (const p of projects) {
+                for (const ide of (p.source_ides || [])) {
+                    if (ide && ide !== 'Unknown') {
+                        if (!ideMap[ide]) ideMap[ide] = { projects: 0, prompts: 0 };
+                        ideMap[ide].projects += 1;
+                        ideMap[ide].prompts += (p.total_prompts || 0);
+                    }
+                }
             }
-            if (ideSet.size <= 1) {
+            const ideList = Object.keys(ideMap).sort((a, b) => ideMap[b].prompts - ideMap[a].prompts);
+            if (ideList.length <= 1) {
                 bar.innerHTML = '';
                 return;
             }
             const zh = currentLang === 'zh';
-            let html = `<div class="ide-filter-chip ${activeIdeFilter === '' ? 'active' : ''}" onclick="filterByIde('')">${zh ? '全部' : 'All'}</div>`;
-            for (const ide of ideSet) {
+            const totalProjects = projects.length;
+            let html = `<div class="ide-filter-chip ${activeIdeFilter === '' ? 'active' : ''}" onclick="filterByIde('')">${zh ? '全部' : 'All'} <span class="chip-count">${totalProjects}</span></div>`;
+            for (const ide of ideList) {
                 const short = IDE_SHORT[ide] || ide.charAt(0);
                 const full = IDE_FULL[ide] || ide;
                 const label = sidebarExpanded ? full : short;
-                html += `<div class="ide-filter-chip ${activeIdeFilter === ide ? 'active' : ''}" onclick="filterByIde('${ide}')" translate="no">${label}</div>`;
+                const count = ideMap[ide].projects;
+                html += `<div class="ide-filter-chip ${activeIdeFilter === ide ? 'active' : ''}" onclick="filterByIde('${ide}')" translate="no">${label} <span class="chip-count">${count}</span></div>`;
             }
             bar.innerHTML = html;
         }
@@ -3637,7 +3673,7 @@
             renderResponse(filteredNodes[index]);
         }
 
-        function selectProject(el, name) {
+        async function selectProject(el, name) {
             if (el) {
                 document.querySelectorAll('.project-btn').forEach(b => b.classList.remove('active'));
                 el.classList.add('active');
@@ -3650,13 +3686,28 @@
             }
             activeProjectId = name;
 
-            let base = activeIdeFilter
-                ? nodes.filter(n => (n.source?.ide || 'Unknown') === activeIdeFilter)
-                : nodes;
-
-            filteredNodes = name
-                ? base.filter(n => (n.project_name || '') === name)
-                : base;
+            if (name) {
+                try {
+                    const projId = encodeURIComponent(projects.find(p => p.project_name === name)?.dna_id || name);
+                    const res = await fetch(`/api/nodes?project_id=${projId}&limit=1000`);
+                    const data = await res.json();
+                    let projectNodes = data.nodes || [];
+                    if (activeIdeFilter) {
+                        projectNodes = projectNodes.filter(n => (n.source?.ide || 'Unknown') === activeIdeFilter);
+                    }
+                    filteredNodes = projectNodes;
+                } catch (e) {
+                    let base = activeIdeFilter
+                        ? nodes.filter(n => (n.source?.ide || 'Unknown') === activeIdeFilter)
+                        : nodes;
+                    filteredNodes = base.filter(n => (n.project_name || '') === name);
+                }
+            } else {
+                let base = activeIdeFilter
+                    ? nodes.filter(n => (n.source?.ide || 'Unknown') === activeIdeFilter)
+                    : nodes;
+                filteredNodes = base;
+            }
 
             renderPrompts();
             if (filteredNodes.length > 0) selectNode(0);
@@ -3888,6 +3939,10 @@
                 Codex: {
                     zh: { title: '未检测到 Codex', body: '需要安装 Codex CLI 才能扫描本地对话记录', cmd: 'npm i -g @openai/codex' },
                     en: { title: 'Codex not found', body: 'Install the Codex CLI to scan local conversation history', cmd: 'npm i -g @openai/codex' }
+                },
+                Kiro: {
+                    zh: { title: '未检测到 Kiro', body: '如已安装，请确认 Kiro 在默认路径，或点击「重新检测」', cmd: '' },
+                    en: { title: 'Kiro not found', body: 'If installed, make sure Kiro is in the default path, or click "RE-DETECT"', cmd: '' }
                 }
             };
 
@@ -3908,7 +3963,8 @@
                 ClaudeCode: `<svg viewBox="0 0 24 24" fill="#D97757" xmlns="http://www.w3.org/2000/svg"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>`,
                 ClaudeDesktop: `<svg viewBox="0 0 24 24" fill="#D97757" xmlns="http://www.w3.org/2000/svg"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>`,
                 Windsurf: `<svg viewBox="0 0 24 24" fill="#00BCD4" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M23.78 5.004h-.228a2.187 2.187 0 00-2.18 2.196v4.912c0 .98-.804 1.775-1.76 1.775a1.818 1.818 0 01-1.472-.773L13.168 5.95a2.197 2.197 0 00-1.81-.95c-1.134 0-2.154.972-2.154 2.173v4.94c0 .98-.797 1.775-1.76 1.775-.57 0-1.136-.289-1.472-.773L.408 5.098C.282 4.918 0 5.007 0 5.228v4.284c0 .216.066.426.188.604l5.475 7.889c.324.466.8.812 1.351.938 1.377.316 2.645-.754 2.645-2.117V11.89c0-.98.787-1.775 1.76-1.775h.002c.586 0 1.135.288 1.472.773l4.972 7.163a2.15 2.15 0 001.81.95c1.158 0 2.151-.973 2.151-2.173v-4.939c0-.98.787-1.775 1.76-1.775h.194c.122 0 .22-.1.22-.222V5.225a.221.221 0 00-.22-.222z" fill-rule="evenodd"/></svg>`,
-                Codex: `<svg viewBox="0 0 24 24" fill="#10A37F" xmlns="http://www.w3.org/2000/svg"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>`,
+                Codex: `<svg viewBox="0 0 24 24" fill="#10A37F" xmlns="http://www.w3.org/2000/svg"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 .642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"/></svg>`,
+                Kiro: `<svg viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="1200" rx="260" fill="#9046FF"/><mask id="kiro_m" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="272" y="202" width="655" height="796"><path d="M926.578 202.793H272.637V997.857H926.578V202.793Z" fill="white"/></mask><g mask="url(#kiro_m)"><path d="M398.554 818.914C316.315 1001.03 491.477 1046.74 620.672 940.156C658.687 1059.66 801.052 970.473 852.234 877.795C964.787 673.567 919.318 465.357 907.64 422.374C827.637 129.443 427.623 128.946 358.8 423.865C342.651 475.544 342.402 534.18 333.458 595.051C328.986 625.86 325.507 645.488 313.83 677.785C306.873 696.424 297.68 712.819 282.773 740.645C259.915 783.881 269.604 867.113 387.87 823.883L399.051 818.914H398.554Z" fill="white"/><path d="M636.123 549.353C603.328 549.353 598.359 510.097 598.359 486.742C598.359 465.623 602.086 448.977 609.293 438.293C615.504 428.852 624.697 424.131 636.123 424.131C647.555 424.131 657.492 428.852 664.447 438.541C672.398 449.474 676.623 466.12 676.623 486.742C676.623 525.998 661.471 549.353 636.375 549.353H636.123Z" fill="black"/><path d="M771.24 549.353C738.445 549.353 733.477 510.097 733.477 486.742C733.477 465.623 737.203 448.977 744.41 438.293C750.621 428.852 759.814 424.131 771.24 424.131C782.672 424.131 792.609 428.852 799.564 438.541C807.516 449.474 811.74 466.12 811.74 486.742C811.74 525.998 796.588 549.353 771.492 549.353H771.24Z" fill="black"/></g></svg>`,
             };
             const zh = currentLang === 'zh';
 

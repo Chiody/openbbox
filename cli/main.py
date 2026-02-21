@@ -274,12 +274,17 @@ def _name_to_ide(name: str):
         "trae": SourceIDE.TRAE,
         "claudecode": SourceIDE.CLAUDECODE,
         "vscode": SourceIDE.VSCODE,
+        "codex": SourceIDE.CODEX,
+        "kiro": SourceIDE.KIRO,
     }
     return mapping.get(name.lower(), SourceIDE.UNKNOWN)
 
 
 def _background_scan():
     """Background thread that periodically scans IDE logs."""
+    import logging
+    bg_logger = logging.getLogger("openbbox.bg_scan")
+
     from adapters.registry import get_available_adapters
     from core.matcher import TemporalMatcher
     from core.storage import PulseStorage
@@ -298,16 +303,20 @@ def _background_scan():
                     ide_enum = _name_to_ide(adapter.name())
                     for convo in conversations:
                         matcher.add_prompt(convo, ide_enum)
-                except Exception:
-                    pass
+                    if conversations:
+                        bg_logger.info("%s: %d conversations", adapter.name(), len(conversations))
+                except Exception as e:
+                    bg_logger.warning("%s scan failed: %s", adapter.name(), e)
 
             nodes = matcher.flush()
             for node in nodes:
                 storage.save_node(node)
+            if nodes:
+                bg_logger.info("Saved %d new nodes", len(nodes))
 
             last_scan = datetime.utcnow()
-        except Exception:
-            pass
+        except Exception as e:
+            bg_logger.error("Background scan error: %s", e)
 
         time.sleep(30)
 

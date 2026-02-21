@@ -44,7 +44,7 @@
 |:-----|:-----|
 | 🧬 **提示词脉络** | 每条提示词都被捕获为干净、可搜索的"基因代码" — 去除聊天噪音 |
 | 📊 **演进映射** | 在统一时间轴中看到"因"（提示词）和"果"（代码变更） |
-| 🔄 **多 IDE 同步** | 一个面板管理 Cursor、Trae、Claude Code、VS Code、Windsurf、Codex |
+| 🔄 **多 IDE 同步** | 一个面板管理 Cursor、Trae、Claude Code、VS Code、Kiro、Windsurf、Codex |
 | 💾 **资产导出** | 将你的"导演剧本"导出为 Markdown 或 `.pulse` JSON 格式复用 |
 | 🔒 **隐私优先** | 100% 本地运行。数据**永远不会**离开你的电脑 |
 | 🌐 **中英双语** | 一键切换中英文界面 |
@@ -74,9 +74,10 @@
 | IDE | 类型 | 采集方式 | 状态 |
 |-----|------|---------|------|
 | **Cursor** | 原生 AI IDE | SQLite + JSONL | ✅ 深度支持 |
-| **VS Code** | 插件生态 | 扩展存储 | ✅ 已支持 |
+| **VS Code** | 插件生态 | Copilot Chat 增量 JSONL + 扩展 DB | ✅ 完整支持 |
 | **Trae** | 原生 AI IDE | SQLite | ✅ 已支持 |
 | **Claude Code** | CLI Agent | 文件监控 + PTY | ✅ 已支持 |
+| **Kiro** | 原生 AI IDE (Amazon) | Agent Sessions JSON + Q Chat API 日志 | ✅ 完整支持 |
 | **Cline / Roo Code** | VS Code 扩展 | 扩展存储 | ✅ 已支持 |
 | **Windsurf** | 原生 AI IDE | SQLite | ✅ 已支持 |
 | **Codex** | CLI | PTY | ✅ 已支持 |
@@ -180,6 +181,33 @@ IDE 日志 (SQLite/JSONL) ──▶ 适配器 ──▶ 时空匹配引擎 ─�
 
 > 📖 完整算法详解请查看[技术架构文档](./docs/ARCHITECTURE.md)。
 
+### 各 IDE 嗅探策略
+
+<details>
+<summary><strong>Kiro</strong> — 双层策略（Agent Sessions + Q Chat API 日志）</summary>
+
+| 层级 | 数据源 | 速度 | 采集内容 |
+|------|--------|------|---------|
+| **workspace_sessions** | `kiro.kiroagent/workspace-sessions/{b64path}/sessions.json` | 快速 | 从 session 历史中提取用户提示词；项目路径从 base64 目录名解码 |
+| **workspace_db** | `workspaceStorage/{hash}/state.vscdb` | 快速 | 兜底：从 VS Code 兼容的 SQLite 中读取 chat/composer 键值 |
+
+**关键发现**：Kiro 的 session JSON 中 assistant 回复只存储占位符（"On it."）。真正的 AI 回复存储在 `~/Library/Application Support/Kiro/logs/` 下的 `Q Chat API.log` 文件中。OpenBBox 解析这些日志，提取 `fullResponse` 和 `assistantResponseEvent` 内容，通过 `conversationId` 关联回对应的会话。
+
+</details>
+
+<details>
+<summary><strong>VS Code</strong> — 三层策略（工作区聊天 + 全局聊天 + AI 扩展）</summary>
+
+| 层级 | 数据源 | 速度 | 采集内容 |
+|------|--------|------|---------|
+| **workspace_chat** | `workspaceStorage/{hash}/chatSessions/*.jsonl` | 快速 | 每个项目的 Copilot Chat 对话 |
+| **global_chat** | `globalStorage/emptyWindowChatSessions/*.jsonl` | 快速 | 无工作区窗口中的对话 |
+| **ai_extensions** | `globalStorage/{ext-id}/`（Cline、Roo Code、Continue、Cody） | 中速 | 第三方 AI 扩展的对话 |
+
+**关键发现**：VS Code Copilot Chat 使用增量 JSONL 格式 — `kind=0` 初始化会话状态，`kind=1` 补丁更新单个字段，`kind=2` 替换整个数组。OpenBBox 通过重放这些增量更新重建完整会话，然后从 response 对象中提取 `markdownContent`。
+
+</details>
+
 ---
 
 ## 🔌 API 接口
@@ -237,7 +265,7 @@ make dev  # 开发模式启动
 - [x] 核心 Python 嗅探引擎 + 多适配器架构
 - [x] 时空匹配算法（提示词 → Git Diff）
 - [x] 三列可视化面板 + 中英双语 UI
-- [x] 多 IDE 支持（Cursor、Trae、Claude Code、VS Code、Windsurf、Codex）
+- [x] 多 IDE 支持（Cursor、Trae、Claude Code、VS Code、Kiro、Windsurf、Codex）
 - [x] PTY 终端包装器（CLI 工具捕获）
 - [x] 资产导出（Markdown / JSON / 提示词列表）
 - [ ] 社区 "Pulse Hub" — 分享提示词序列

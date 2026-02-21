@@ -100,37 +100,18 @@ async def get_stats():
 @app.get("/api/projects")
 async def list_projects():
     """List all tracked projects, aggregated from PulseNodes."""
-    all_nodes = storage.list_nodes(limit=10000)
-    project_map: dict[str, dict] = {}
-
-    for node in all_nodes:
-        key = node.project_name or node.project_id or "(Uncategorized)"
-        if key not in project_map:
-            project_map[key] = {
-                "project_name": node.project_name or key,
-                "project_path": node.project_id,
-                "source_ides": set(),
-                "total_prompts": 0,
-                "first_timestamp": node.timestamp,
-                "last_timestamp": node.timestamp,
-            }
-        project_map[key]["total_prompts"] += 1
-        project_map[key]["source_ides"].add(node.source.ide.value)
-        if node.timestamp < project_map[key]["first_timestamp"]:
-            project_map[key]["first_timestamp"] = node.timestamp
-        if node.timestamp > project_map[key]["last_timestamp"]:
-            project_map[key]["last_timestamp"] = node.timestamp
+    agg = storage.aggregate_projects()
 
     projects = []
-    for key, info in sorted(project_map.items(), key=lambda x: -x[1]["total_prompts"]):
+    for info in agg:
         projects.append({
-            "dna_id": info["project_path"] or key,
+            "dna_id": info["project_path"] or info["project_name"],
             "project_name": info["project_name"],
             "project_path": info["project_path"],
-            "source_ides": sorted(info["source_ides"]),
+            "source_ides": info["source_ides"],
             "total_prompts": info["total_prompts"],
-            "created_at": info["first_timestamp"].isoformat(),
-            "updated_at": info["last_timestamp"].isoformat(),
+            "created_at": info["first_timestamp"],
+            "updated_at": info["last_timestamp"],
         })
 
     return {"projects": projects}
@@ -198,6 +179,7 @@ def _ide_name_to_enum(name: str) -> SourceIDE:
         "claudecode": SourceIDE.CLAUDECODE,
         "vscode": SourceIDE.VSCODE,
         "codex": SourceIDE.CODEX,
+        "kiro": SourceIDE.KIRO,
     }
     return mapping.get(name.lower(), SourceIDE.UNKNOWN)
 

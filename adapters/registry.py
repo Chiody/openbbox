@@ -16,6 +16,7 @@ from adapters.cursor_adapter import CursorAdapter
 from adapters.trae_adapter import TraeAdapter
 from adapters.vscode_adapter import VSCodeAdapter
 from adapters.windsurf_adapter import WindsurfAdapter
+from adapters.kiro_adapter import KiroAdapter
 
 logger = logging.getLogger("openbbox.registry")
 
@@ -28,6 +29,7 @@ ALL_ADAPTERS: list[type[BaseAdapter]] = [
     TraeAdapter,
     WindsurfAdapter,
     CodexAdapter,
+    KiroAdapter,
 ]
 
 

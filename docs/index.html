@@ -432,7 +432,7 @@
 
         .showcase-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 24px;
         }
 
@@ -461,6 +461,7 @@
         .tag-trae { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
         .tag-claude { background: rgba(249, 115, 22, 0.1); color: #f97316; }
         .tag-vscode { background: rgba(168, 85, 247, 0.1); color: var(--accent-purple); }
+        .tag-kiro { background: rgba(144, 70, 255, 0.1); color: #9046FF; }
 
         .showcase-card h4 { font-size: 18px; margin-bottom: 8px; }
         .showcase-card p { font-size: 13px; color: #555; line-height: 1.6; }
@@ -558,7 +559,7 @@
         /* ── Responsive ── */
         @media (max-width: 768px) {
             .how-inner { grid-template-columns: 1fr; }
-            .showcase-grid { grid-template-columns: 1fr; }
+            .showcase-grid { grid-template-columns: 1fr 1fr; }
             .preview-body { grid-template-columns: 1fr; }
             .preview-col1, .preview-col2 { display: none; }
         }
@@ -597,6 +598,7 @@
             const ides = [
                 { name: 'Cursor', svg: '<svg viewBox="0 0 24 24" fill="#e0e0e0"><path d="M22.106 5.68L12.5.135a.998.998 0 00-.998 0L1.893 5.68a.84.84 0 00-.419.726v11.186c0 .3.16.577.42.727l9.607 5.547a.999.999 0 00.998 0l9.608-5.547a.84.84 0 00.42-.727V6.407a.84.84 0 00-.42-.726zm-.603 1.176L12.228 22.92c-.063.108-.228.064-.228-.061V12.34a.59.59 0 00-.295-.51l-9.11-5.26c-.107-.062-.063-.228.062-.228h18.55c.264 0 .428.286.296.514z"/></svg>' },
                 { name: 'VS Code', svg: '<svg viewBox="0 0 24 24" fill="#007ACC"><path d="M17.583 0L9.04 7.647 3.788 3.574.5 4.97v14.06l3.288 1.396 5.252-4.074L17.583 24 23.5 21.42V2.58L17.583 0zM17.5 17.77l-5.458-4.226V10.46L17.5 6.23v11.54zM6.396 12.002l-2.857-2.18v4.36l2.857-2.18z"/></svg>' },
+                { name: 'Kiro', svg: '<svg viewBox="0 0 1200 1200" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="1200" height="1200" rx="260" fill="#9046FF"/><mask id="km" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="272" y="202" width="655" height="796"><path d="M926.578 202.793H272.637V997.857H926.578V202.793Z" fill="white"/></mask><g mask="url(#km)"><path d="M398.554 818.914C316.315 1001.03 491.477 1046.74 620.672 940.156C658.687 1059.66 801.052 970.473 852.234 877.795C964.787 673.567 919.318 465.357 907.64 422.374C827.637 129.443 427.623 128.946 358.8 423.865C342.651 475.544 342.402 534.18 333.458 595.051C328.986 625.86 325.507 645.488 313.83 677.785C306.873 696.424 297.68 712.819 282.773 740.645C259.915 783.881 269.604 867.113 387.87 823.883L399.051 818.914H398.554Z" fill="white"/><path d="M636.123 549.353C603.328 549.353 598.359 510.097 598.359 486.742C598.359 465.623 602.086 448.977 609.293 438.293C615.504 428.852 624.697 424.131 636.123 424.131C647.555 424.131 657.492 428.852 664.447 438.541C672.398 449.474 676.623 466.12 676.623 486.742C676.623 525.998 661.471 549.353 636.375 549.353H636.123Z" fill="#9046FF"/><path d="M771.24 549.353C738.445 549.353 733.477 510.097 733.477 486.742C733.477 465.623 737.203 448.977 744.41 438.293C750.621 428.852 759.814 424.131 771.24 424.131C782.672 424.131 792.609 428.852 799.564 438.541C807.516 449.474 811.74 466.12 811.74 486.742C811.74 525.998 796.588 549.353 771.492 549.353H771.24Z" fill="#9046FF"/></g></svg>' },
                 { name: 'Trae', svg: '<svg viewBox="0 0 24 24" fill="#4ADE80"><path d="M24 20.541H3.428v-3.426H0V3.4h24V20.54zM3.428 17.115h17.144V6.827H3.428v10.288zm8.573-5.196l-2.425 2.424-2.424-2.424 2.424-2.424 2.425 2.424zm6.857-.001l-2.424 2.423-2.425-2.423 2.425-2.425 2.424 2.425z"/></svg>' },
                 { name: 'Claude Code', svg: '<svg viewBox="0 0 24 24" fill="#D97757"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z"/></svg>' },
                 { name: 'Windsurf', svg: '<svg viewBox="0 0 24 24" fill="#00BCD4"><path clip-rule="evenodd" d="M23.78 5.004h-.228a2.187 2.187 0 00-2.18 2.196v4.912c0 .98-.804 1.775-1.76 1.775a1.818 1.818 0 01-1.472-.773L13.168 5.95a2.197 2.197 0 00-1.81-.95c-1.134 0-2.154.972-2.154 2.173v4.94c0 .98-.797 1.775-1.76 1.775-.57 0-1.136-.289-1.472-.773L.408 5.098C.282 4.918 0 5.007 0 5.228v4.284c0 .216.066.426.188.604l5.475 7.889c.324.466.8.812 1.351.938 1.377.316 2.645-.754 2.645-2.117V11.89c0-.98.787-1.775 1.76-1.775h.002c.586 0 1.135.288 1.472.773l4.972 7.163a2.15 2.15 0 001.81.95c1.158 0 2.151-.973 2.151-2.173v-4.939c0-.98.787-1.775 1.76-1.775h.194c.122 0 .22-.1.22-.222V5.225a.221.221 0 00-.22-.222z" fill-rule="evenodd"/></svg>' },
@@ -676,7 +678,7 @@
                         <div class="how-step-num">1</div>
                         <div>
                             <h4 id="s1t">Silent Capture</h4>
-                            <p id="s1d">OpenBBox runs as a background service, automatically detecting and reading conversation logs from your AI IDEs (Cursor, Trae, Claude Code, etc.).</p>
+                            <p id="s1d">OpenBBox runs as a background service, auto-detecting conversation logs from Cursor, VS Code, Kiro, Trae, Claude Code and more.</p>
                         </div>
                     </div>
                     <div class="how-step">
@@ -738,21 +740,33 @@
                 <div class="stats"><span>Prompts: <strong>47</strong></span><span>Files: <strong>23</strong></span><span>Time: <strong>3h</strong></span></div>
             </div>
             <div class="showcase-card">
+                <div class="tag tag-kiro">Kiro</div>
+                <h4 id="c2t">Recovering Hidden AI Responses</h4>
+                <p id="c2d">Kiro stores only placeholder responses in session files. OpenBBox reverse-engineered the Q Chat API logs to recover full AI responses — turning 6-char "On it." into 300-700 char complete answers.</p>
+                <div class="stats"><span>Sessions: <strong>5</strong></span><span>Recovery: <strong>100%</strong></span><span>Method: <strong>Log Forensics</strong></span></div>
+            </div>
+            <div class="showcase-card">
+                <div class="tag tag-vscode">VS Code Copilot</div>
+                <h4 id="c3t">Incremental JSONL Reconstruction</h4>
+                <p id="c3d">VS Code Copilot Chat uses incremental updates (init/patch/replace). OpenBBox rebuilds the full session state, extracting complete AI responses from 10+ conversations that were previously fragmented.</p>
+                <div class="stats"><span>Conversations: <strong>10</strong></span><span>Avg Response: <strong>1.5K chars</strong></span><span>Format: <strong>JSONL</strong></span></div>
+            </div>
+            <div class="showcase-card">
                 <div class="tag tag-claude">Claude Code</div>
-                <h4 id="c2t">CLI-to-Visual Retrospective</h4>
-                <p id="c2d">Claude Code runs in the terminal with no visual history. OpenBBox transformed 120+ CLI interactions into a visual timeline, revealing an architectural drift that was caught and corrected.</p>
+                <h4 id="c4t">CLI-to-Visual Retrospective</h4>
+                <p id="c4d">Claude Code runs in the terminal with no visual history. OpenBBox transformed 120+ CLI interactions into a visual timeline, revealing an architectural drift that was caught and corrected.</p>
                 <div class="stats"><span>Prompts: <strong>124</strong></span><span>Files: <strong>56</strong></span><span>Drift: <strong>Caught</strong></span></div>
             </div>
             <div class="showcase-card">
                 <div class="tag tag-trae">Trae</div>
-                <h4 id="c3t">Cross-IDE Migration</h4>
-                <p id="c3d">A team started in Trae, then switched to Cursor mid-project. OpenBBox maintained a unified timeline across both IDEs, preserving the complete decision history.</p>
+                <h4 id="c5t">Cross-IDE Migration</h4>
+                <p id="c5d">A team started in Trae, then switched to Cursor mid-project. OpenBBox maintained a unified timeline across both IDEs, preserving the complete decision history.</p>
                 <div class="stats"><span>IDEs: <strong>2</strong></span><span>Prompts: <strong>89</strong></span><span>Continuity: <strong>100%</strong></span></div>
             </div>
             <div class="showcase-card">
                 <div class="tag tag-vscode">VS Code + Cline</div>
-                <h4 id="c4t">Team Knowledge Sharing</h4>
-                <p id="c4d">A senior developer exported their "Director's Script" for a microservice architecture. Junior developers imported it and replicated the same quality in their own projects.</p>
+                <h4 id="c6t">Team Knowledge Sharing</h4>
+                <p id="c6d">A senior developer exported their "Director's Script" for a microservice architecture. Junior developers imported it and replicated the same quality in their own projects.</p>
                 <div class="stats"><span>Exported: <strong>1 script</strong></span><span>Reused: <strong>5 projects</strong></span></div>
             </div>
         </div>
@@ -803,21 +817,23 @@
                 v1t: 'Intent Preservation', v1d: 'Every prompt is captured as a "Genetic Code". Never lose the creative thinking behind your complex code structures.',
                 v2t: 'Evolution Mapping', v2d: 'Visualize how your project grows. Link every prompt to its code diff and AI reasoning.',
                 v3t: 'Asset Replication', v3d: 'Extract prompt sequences. Export as Markdown or JSON. Replicate architectures with one click.',
-                v4t: 'Multi-Source Sync', v4d: 'Cursor, Trae, Claude Code, VS Code — all unified into one source of truth.',
+                v4t: 'Multi-Source Sync', v4d: 'Cursor, VS Code, Kiro, Trae, Claude Code, Windsurf — all unified into one source of truth.',
                 v5t: 'Privacy First', v5d: 'All data stays local. OpenBBox never uploads your code or prompts to any server.',
                 v6t: "Director's Script", v6d: 'Generate a clean prompt sequence stripped of AI noise. Copy it, share it, replay it.',
                 ssTitle: 'See It in Action', ssSub: 'Real screenshots from the OpenBBox workspace.',
                 ssCap1: 'The Three-Column Workspace: Prompt list → AI response → Code diff with line numbers',
                 ssCap2: 'IDE Scanner: Auto-detects Cursor, VS Code, Trae, Codex and more on your machine',
                 howTitle: 'How It Works', howSub: 'Three steps. Zero configuration.',
-                s1t: 'Silent Capture', s1d: 'OpenBBox runs in the background, auto-detecting conversation logs from your AI IDEs.',
+                s1t: 'Silent Capture', s1d: 'OpenBBox runs in the background, auto-detecting conversation logs from Cursor, VS Code, Kiro, Trae, Claude Code and more.',
                 s2t: 'Temporal Alignment', s2d: 'The matching engine links prompts to code changes within a 60-second window.',
                 s3t: 'Visual Pipeline', s3d: 'Three-column workspace: projects, prompt DNA, and AI responses. Scroll-linked and copy-ready.',
                 caseTitle: 'Real-World Use Cases', caseSub: 'See how developers use OpenBBox.',
                 c1t: 'Full-Stack SaaS in 3 Hours', c1d: '47 prompts in Cursor built a complete SaaS backend. Replicated in 30 minutes.',
-                c2t: 'CLI-to-Visual Retrospective', c2d: '120+ Claude Code CLI interactions visualized. Architectural drift caught and corrected.',
-                c3t: 'Cross-IDE Migration', c3d: 'Trae to Cursor mid-project. Unified timeline preserved complete decision history.',
-                c4t: 'Team Knowledge Sharing', c4d: 'Senior dev exported a Director\'s Script. 5 junior projects replicated the same quality.',
+                c2t: 'Recovering Hidden AI Responses', c2d: 'Kiro stores only placeholders. OpenBBox recovered full AI responses from Q Chat API logs.',
+                c3t: 'Incremental JSONL Reconstruction', c3d: 'VS Code Copilot Chat uses incremental updates. OpenBBox rebuilds full sessions from fragmented data.',
+                c4t: 'CLI-to-Visual Retrospective', c4d: '120+ Claude Code CLI interactions visualized. Architectural drift caught and corrected.',
+                c5t: 'Cross-IDE Migration', c5d: 'Trae to Cursor mid-project. Unified timeline preserved complete decision history.',
+                c6t: 'Team Knowledge Sharing', c6d: 'Senior dev exported a Director\'s Script. 5 junior projects replicated the same quality.',
                 privTitle: 'Privacy is Non-Negotiable', privDesc: '100% local. Your code, prompts, and IP never leave your machine.',
                 privBadge1: 'LOCAL ONLY', privBadge2: 'MIT LICENSE', privBadge3: 'ZERO TELEMETRY',
                 ctaTitle: 'Start Recording Your AI DNA', ctaDesc: '30 seconds to install. Zero configuration.',
@@ -842,21 +858,23 @@
                 v1t: '意图沉淀', v1d: '捕获每一条提示词作为"基因片段"。保留复杂架构背后的指挥思路，永不丢失。',
                 v2t: '演进具像化', v2d: '可视化项目成长轨迹。自动将每一条指令与对应的代码 Diff 和 AI 推理对齐。',
                 v3t: '资产化复刻', v3d: '提炼高质量指令序列。导出为 Markdown 或 JSON 蓝图。一键在新项目中复现成功架构。',
-                v4t: '多源同步', v4d: '整合 Cursor、Trae、Claude Code、VS Code 等多端数据至统一面板。',
+                v4t: '多源同步', v4d: '整合 Cursor、VS Code、Kiro、Trae、Claude Code、Windsurf 等多端数据至统一面板。',
                 v5t: '隐私至上', v5d: '所有数据存储在本地。脉络永远不会将你的代码或提示词上传到任何服务器。',
                 v6t: '导演剧本', v6d: '生成纯净的指令序列，去除 AI 的冗余回复。可复制、可分享、可在新项目中重放。',
                 ssTitle: '实际效果', ssSub: '来自 OpenBBox 工作台的真实截图。',
                 ssCap1: '三列工作台：提示词列表 → AI 回复 → 代码 Diff 与行号',
                 ssCap2: 'IDE 嗅探面板：自动检测你机器上的 Cursor、VS Code、Trae、Codex 等',
                 howTitle: '工作原理', howSub: '三步完成，零配置。',
-                s1t: '静默捕获', s1d: '脉络作为后台服务运行，自动检测并读取 AI 编辑器的本地对话日志。',
+                s1t: '静默捕获', s1d: '脉络作为后台服务运行，自动检测 Cursor、VS Code、Kiro、Trae、Claude Code 等编辑器的本地对话日志。',
                 s2t: '时空对齐', s2d: '匹配引擎将每条指令与 60 秒窗口内的代码变更关联，自动建立因果链。',
                 s3t: '可视化流水线', s3d: '三列工作空间：项目源、提示词 DNA、AI 响应。滚动联动，一键复制。',
                 caseTitle: '真实案例', caseSub: '看看开发者如何使用脉络保存 AI 开发工作流。',
                 c1t: '3 小时构建全栈 SaaS', c1d: '在 Cursor 中用 47 条指令构建完整 SaaS 后端。通过脉络导出剧本，30 分钟复刻到第二个产品。',
-                c2t: 'CLI 到可视化复盘', c2d: '120+ 条 Claude Code 终端交互被可视化。发现并修正了架构偏移。',
-                c3t: '跨 IDE 无缝迁移', c3d: '项目中途从 Trae 切换到 Cursor。脉络维护了统一的时间线，完整保留决策历史。',
-                c4t: '团队知识共享', c4d: '高级开发者导出"导演剧本"。5 个初级项目复刻了同等质量的架构。',
+                c2t: '恢复隐藏的 AI 回复', c2d: 'Kiro 只存储占位符回复。脉络从 Q Chat API 日志中恢复了完整的 AI 回复内容。',
+                c3t: '增量 JSONL 重建', c3d: 'VS Code Copilot Chat 使用增量更新格式。脉络重建完整会话，从碎片化数据中提取完整回复。',
+                c4t: 'CLI 到可视化复盘', c4d: '120+ 条 Claude Code 终端交互被可视化。发现并修正了架构偏移。',
+                c5t: '跨 IDE 无缝迁移', c5d: '项目中途从 Trae 切换到 Cursor。脉络维护了统一的时间线，完整保留决策历史。',
+                c6t: '团队知识共享', c6d: '高级开发者导出"导演剧本"。5 个初级项目复刻了同等质量的架构。',
                 privTitle: '隐私不可妥协', privDesc: '100% 本地化。你的代码、提示词和知识产权永远不会离开你的设备。',
                 privBadge1: '仅限本地', privBadge2: 'MIT 协议', privBadge3: '零遥测',
                 ctaTitle: '开始记录你的 AI 基因', ctaDesc: '30 秒安装，零配置。',
@@ -887,7 +905,7 @@
                 'how-title': 'howTitle', 'how-sub': 'howSub',
                 's1t': 's1t', 's1d': 's1d', 's2t': 's2t', 's2d': 's2d', 's3t': 's3t', 's3d': 's3d',
                 'case-title': 'caseTitle', 'case-sub': 'caseSub',
-                'c1t': 'c1t', 'c1d': 'c1d', 'c2t': 'c2t', 'c2d': 'c2d', 'c3t': 'c3t', 'c3d': 'c3d', 'c4t': 'c4t', 'c4d': 'c4d',
+                'c1t': 'c1t', 'c1d': 'c1d', 'c2t': 'c2t', 'c2d': 'c2d', 'c3t': 'c3t', 'c3d': 'c3d', 'c4t': 'c4t', 'c4d': 'c4d', 'c5t': 'c5t', 'c5d': 'c5d', 'c6t': 'c6t', 'c6d': 'c6d',
                 'priv-title': 'privTitle', 'priv-desc': 'privDesc',
                 'cta-title': 'ctaTitle', 'cta-desc': 'ctaDesc', 'cta-btn1': 'ctaBtn1', 'cta-btn2': 'ctaBtn2',
                 'footer-logo': 'footerLogo', 'footer-copy': 'footerCopy',

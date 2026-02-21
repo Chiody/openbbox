@@ -31,8 +31,11 @@ docs/cankao.md
 # Promo / generated media (not part of the project)
 gen_voice.py
 gen_video.py
+gen_xiaohongshu.py
 voiceover.*
 openbbox_promo*.mp4
+xiaohongshu_*.png
+logo.html
 *.mp3
 
 # OS

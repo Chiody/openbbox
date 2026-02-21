@@ -249,7 +249,10 @@ class CodexAdapter(BaseAdapter):
     @staticmethod
     def _parse_iso_timestamp(raw: str) -> Optional[datetime]:
         try:
-            return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            if dt.tzinfo is not None:
+                dt = dt.replace(tzinfo=None)
+            return dt
         except (ValueError, AttributeError):
             return None
 

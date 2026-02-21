@@ -168,6 +168,31 @@ class PulseStorage:
             ).fetchall()
         return [self._row_to_node(r) for r in rows]
 
+    def aggregate_projects(self) -> list[dict]:
+        rows = self.conn.execute("""
+            SELECT
+                project_name,
+                project_id,
+                GROUP_CONCAT(DISTINCT source_ide) as source_ides,
+                COUNT(*) as total_prompts,
+                MIN(timestamp) as first_timestamp,
+                MAX(timestamp) as last_timestamp
+            FROM pulse_nodes
+            GROUP BY COALESCE(project_name, project_id, '(Uncategorized)')
+            ORDER BY total_prompts DESC
+        """).fetchall()
+        results = []
+        for r in rows:
+            results.append({
+                "project_name": r[0] or r[1] or "(Uncategorized)",
+                "project_path": r[1] or "",
+                "source_ides": sorted(set(r[2].split(",") if r[2] else [])),
+                "total_prompts": r[3],
+                "first_timestamp": r[4],
+                "last_timestamp": r[5],
+            })
+        return results
+
     def count_nodes(self, project_id: Optional[str] = None) -> int:
         if project_id:
             row = self.conn.execute(

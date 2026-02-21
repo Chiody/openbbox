@@ -239,8 +239,13 @@ class VSCodeAdapter(BaseAdapter):
     def _parse_chat_session_jsonl(
         self, path: Path, since: Optional[datetime]
     ) -> list[RawConversation]:
-        results: list[RawConversation] = []
-        requests: list[dict] = []
+        """Parse .jsonl chat session files (incremental format).
+
+        Format: kind=0 (init), kind=1 (patch), kind=2 (replace).
+        We rebuild the session state by applying patches/replacements,
+        then extract conversations from the final state.
+        """
+        session: dict = {}
         session_ts: Optional[datetime] = None
 
         try:
@@ -255,23 +260,45 @@ class VSCodeAdapter(BaseAdapter):
                         continue
 
                     kind = entry.get("kind")
-                    v = entry.get("v", {})
+                    k = entry.get("k", "")
+                    v = entry.get("v")
 
                     if kind == 0:
-                        creation = v.get("creationDate")
-                        if creation:
-                            session_ts = self._parse_ts_value(creation)
-                        init_requests = v.get("requests", [])
-                        for req in init_requests:
-                            results.extend(self._extract_from_request(req, session_ts, since))
+                        if isinstance(v, dict):
+                            session = v
+                            creation = v.get("creationDate")
+                            if creation:
+                                session_ts = self._parse_ts_value(creation)
 
-                    elif kind == 1:
-                        requests.append(v)
-                        results.extend(self._extract_from_request(v, session_ts, since))
+                    elif kind == 2 and isinstance(k, list) and len(k) >= 3:
+                        if k[0] == "requests" and isinstance(k[1], int):
+                            req_idx = k[1]
+                            field = k[2]
+                            reqs = session.setdefault("requests", [])
+                            while len(reqs) <= req_idx:
+                                reqs.append({})
+                            if isinstance(reqs[req_idx], dict):
+                                reqs[req_idx][field] = v
+
+                    elif kind == 2 and isinstance(k, list) and len(k) == 1:
+                        if k[0] == "requests" and isinstance(v, list):
+                            for new_req in v:
+                                if not isinstance(new_req, dict):
+                                    continue
+                                reqs = session.setdefault("requests", [])
+                                msg = new_req.get("message", {})
+                                prompt = ""
+                                if isinstance(msg, dict):
+                                    prompt = msg.get("text", msg.get("content", ""))
+                                if prompt and prompt.strip():
+                                    reqs.append(new_req)
 
         except (OSError, UnicodeDecodeError) as e:
             logger.debug("Failed to read chat session %s: %s", path, e)
 
+        results: list[RawConversation] = []
+        for req in session.get("requests", []):
+            results.extend(self._extract_from_request(req, session_ts, since))
         return results
 
     def _parse_chat_session_json(
@@ -313,7 +340,35 @@ class VSCodeAdapter(BaseAdapter):
 
         response_parts: list[str] = []
         resp = req.get("response", {})
-        if isinstance(resp, dict):
+        if isinstance(resp, list):
+            for item in resp:
+                if not isinstance(item, dict):
+                    continue
+                kind = item.get("kind", "")
+                if kind in ("mcpServersStarting", "progressTaskSerialized",
+                            "toolInvocationSerialized", "undoStop",
+                            "codeblockUri", "textEditGroup"):
+                    continue
+                if kind == "thinking":
+                    continue
+                val = item.get("value", "")
+                if isinstance(val, dict):
+                    mc = val.get("markdownContent", "")
+                    if mc:
+                        response_parts.append(mc)
+                    elif val.get("value"):
+                        response_parts.append(str(val["value"]))
+                elif isinstance(val, str) and val.strip():
+                    clean = val.strip()
+                    if not clean.startswith("```") or len(clean) > 10:
+                        response_parts.append(clean)
+                if kind == "markdownContent":
+                    md = item.get("content", {})
+                    if isinstance(md, dict):
+                        response_parts.append(md.get("value", ""))
+                    elif isinstance(md, str):
+                        response_parts.append(md)
+        elif isinstance(resp, dict):
             for val in resp.get("value", []):
                 if isinstance(val, dict):
                     if val.get("kind") == "markdownContent":
@@ -531,7 +586,10 @@ class VSCodeAdapter(BaseAdapter):
                     raw = data[key]
                     if isinstance(raw, (int, float)):
                         return datetime.fromtimestamp(raw / 1000 if raw > 1e12 else raw)
-                    return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+                    dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+                    if dt.tzinfo is not None:
+                        dt = dt.replace(tzinfo=None)
+                    return dt
                 except (ValueError, OSError):
                     pass
         return None
@@ -541,7 +599,10 @@ class VSCodeAdapter(BaseAdapter):
         try:
             if isinstance(raw, (int, float)):
                 return datetime.fromtimestamp(raw / 1000 if raw > 1e12 else raw)
-            return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            if dt.tzinfo is not None:
+                dt = dt.replace(tzinfo=None)
+            return dt
         except (ValueError, OSError):
             return None
 

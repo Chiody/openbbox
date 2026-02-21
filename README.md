@@ -44,7 +44,7 @@ AI-assisted coding is fast, but it's a **Black Box**.
 |:--------|:------------|
 | 🧬 **Prompt Lineage** | Every prompt captured as a clean, searchable "Genetic Code" — no chat noise |
 | 📊 **Evolution Mapping** | See the "Cause" (Prompt) and "Effect" (Code Diff) in a unified timeline |
-| 🔄 **Multi-IDE Sync** | One dashboard for Cursor, Trae, Claude Code, VS Code, Windsurf, Codex |
+| 🔄 **Multi-IDE Sync** | One dashboard for Cursor, Trae, Claude Code, VS Code, Kiro, Windsurf, Codex |
 | 💾 **Asset Export** | Export your "Director's Scripts" as Markdown or `.pulse` JSON for reuse |
 | 🔒 **Privacy First** | 100% local. We sniff local logs. Your data **never** leaves your machine |
 | 🌐 **Bilingual UI** | Full Chinese/English toggle with one click |
@@ -74,9 +74,10 @@ Imagine you built a secure auth module in **Project A** using Cursor. With OpenB
 | IDE | Type | Capture Method | Status |
 |-----|------|----------------|--------|
 | **Cursor** | Native AI IDE | SQLite + JSONL | ✅ Deep Support |
-| **VS Code** | Plugin Ecosystem | Extension Storage | ✅ Supported |
+| **VS Code** | Plugin Ecosystem | Copilot Chat JSONL (incremental) + Extensions DB | ✅ Full Support |
 | **Trae** | Native AI IDE | SQLite | ✅ Supported |
 | **Claude Code** | CLI Agent | File Watch + PTY | ✅ Supported |
+| **Kiro** | Native AI IDE (Amazon) | Agent Sessions JSON + Q Chat API Logs | ✅ Full Support |
 | **Cline / Roo Code** | VS Code Extension | Extension Storage | ✅ Supported |
 | **Windsurf** | Native AI IDE | SQLite | ✅ Supported |
 | **Codex** | CLI | PTY | ✅ Supported |
@@ -182,6 +183,33 @@ IDE Logs (SQLite/JSONL) ──▶ Adapters ──▶ Temporal Matcher ──▶ 
 
 > 📖 For the full algorithm breakdown, see [Technical Architecture](./docs/ARCHITECTURE.md).
 
+### Sniff Strategies by IDE
+
+<details>
+<summary><strong>Kiro</strong> — 2-Layer Strategy (Agent Sessions + Q Chat API Logs)</summary>
+
+| Layer | Source | Speed | What It Captures |
+|-------|--------|-------|-----------------|
+| **workspace_sessions** | `kiro.kiroagent/workspace-sessions/{b64path}/sessions.json` | FAST | User prompts from session history; project path decoded from base64 directory name |
+| **workspace_db** | `workspaceStorage/{hash}/state.vscdb` | FAST | Fallback: chat/composer keys from VS Code-compatible SQLite |
+
+**Key insight**: Kiro's session JSON only stores placeholder assistant responses ("On it."). The real AI responses live in `Q Chat API.log` files under `~/Library/Application Support/Kiro/logs/`. OpenBBox parses these logs, extracts `fullResponse` and `assistantResponseEvent` content, and correlates them back to sessions via `conversationId`.
+
+</details>
+
+<details>
+<summary><strong>VS Code</strong> — 3-Layer Strategy (Workspace Chat + Global Chat + AI Extensions)</summary>
+
+| Layer | Source | Speed | What It Captures |
+|-------|--------|-------|-----------------|
+| **workspace_chat** | `workspaceStorage/{hash}/chatSessions/*.jsonl` | FAST | Copilot Chat conversations per project |
+| **global_chat** | `globalStorage/emptyWindowChatSessions/*.jsonl` | FAST | Conversations from windows without a workspace |
+| **ai_extensions** | `globalStorage/{ext-id}/` (Cline, Roo Code, Continue, Cody) | MEDIUM | Third-party AI extension conversations |
+
+**Key insight**: VS Code Copilot Chat uses an incremental JSONL format — `kind=0` initializes the session state, `kind=1` patches individual fields, `kind=2` replaces entire arrays. OpenBBox reconstructs the full session by replaying these updates, then extracts `markdownContent` from the response objects.
+
+</details>
+
 ---
 
 ## 🔌 API
@@ -239,7 +267,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for the full guide.
 - [x] Core Python sniffer engine with multi-adapter architecture
 - [x] Temporal matching algorithm (Prompt → Git Diff)
 - [x] Three-column web dashboard with bilingual UI
-- [x] Multi-IDE support (Cursor, Trae, Claude Code, VS Code, Windsurf, Codex)
+- [x] Multi-IDE support (Cursor, Trae, Claude Code, VS Code, Kiro, Windsurf, Codex)
 - [x] PTY terminal wrapper for CLI tools
 - [x] Asset export (Markdown / JSON / prompt list)
 - [ ] Community "Pulse Hub" for sharing prompt sequences

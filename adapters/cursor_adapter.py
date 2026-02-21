@@ -588,7 +588,10 @@ class CursorAdapter(BaseAdapter):
         try:
             if isinstance(raw, (int, float)):
                 return datetime.fromtimestamp(raw / 1000 if raw > 1e12 else raw)
-            return datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            if dt.tzinfo is not None:
+                dt = dt.replace(tzinfo=None)
+            return dt
         except (ValueError, OSError, TypeError):
             return None
 

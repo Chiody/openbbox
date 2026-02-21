@@ -22,6 +22,7 @@ class SourceIDE(str, Enum):
     VSCODE = "VSCode"
     WINDSURF = "Windsurf"
     CODEX = "Codex"
+    KIRO = "Kiro"
     CLINE = "Cline"
     AIDER = "Aider"
     UNKNOWN = "Unknown"
